@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}ออกจากระบบ{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">ออกจากระบบสำเร็จ</h5>
+            </div>
+            <div class="card-body">
+                <p>คุณได้ออกจากระบบเรียบร้อยแล้ว</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">เข้าสู่ระบบอีกครั้ง</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

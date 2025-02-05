@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - ระบบจัดการงานบริการ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .home-container {
+        min-height: calc(100vh - 100px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .logo-container {
+        margin-bottom: 2rem;
+    }
+
+    .logo-container img {
+        max-width: 300px;
+        height: auto;
+    }
+
+    .welcome-text {
+        margin-bottom: 3rem;
+    }
+    .text-primary {
+        --bs-text-opacity: 1;
+        color: #084298 !important;
+        transition: color 0.3s ease;
+    }
+    .text-primary:hover {
+        color: #0c57c6 !important;
+    }
+    a {
+        text-decoration: none;
+    }
+    .feature-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .feature-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #084298;
+    }
+    .btn-primary {
+        background-color: #084298;
+        border-color: #084298;
+        transition: color 0.3s ease;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    .btn-outline-primary {
+        color: #084298;
+        border-color: #084298;
+        transition: color 0.3s ease;
+    }
+    .btn-outline-primary:hover {
+        color: #ffffff !important;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    @media (max-width: 768px) {
+        .home-container {
+            padding: 1rem;
+        }
+        
+        .logo-container img {
+            max-width: 200px;
+        }
+        
+        .welcome-text h1 {
+            font-size: 2rem;
+        }
+        
+        .feature-cards {
+            gap: 1rem;
+        }
+        
+        .feature-card {
+            padding: 1.5rem;
+        }
+        
+        .quick-contact .btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <div class="logo-container">
+        <img src="/static/img/sokol_services_logo.png" alt="Sakol Service Logo">
+    </div>
+
+    <div class="welcome-text">
+        <h1 class="display-4 mb-3">ยินดีต้อนรับสู่ SAKOL SERVICE</h1>
+        <p class="lead text-muted">มั่นใจ ไร้กังวล ให้สากลดูแล</p>
+        <p class="lead text-muted">ติดต่อเราโดยตรงได้ที่</p>
+        <h3 class="display-6 mb-3"><a class="text-primary" href="tel:029112280">02-911-2280</a></h3>
+        <p class="lead text-muted">หรือส่งข้อความที่ <a class="text-primary" href="https://www.facebook.com/sakolservices" target="_blank" rel="noopener noreferrer">Sakol Services</a></p>
+    </div>
+
+    {% if user.is_authenticated %}
+    <div class="feature-cards">
+        {% if user.user_type == 'customer' %}
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h3>แจ้งซ่อม</h3>
+            <p>แจ้งปัญหาและติดตามสถานะการซ่อม</p>
+            <a href="{% url 'service:create_request' %}" class="btn btn-primary">แจ้งซ่อมใหม่</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <h3>รายการแจ้งซ่อม</h3>
+            <p>ดูประวัติและติดตามงานซ่อม</p>
+            <a href="{% url 'service:request_list' %}" class="btn btn-primary">ดูรายการ</a>
+        </div>
+        {% elif user.user_type == 'service' %}
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3>แดชบอร์ด</h3>
+            <p>ดูภาพรวมการให้บริการ</p>
+            <a href="{% url 'service:dashboard' %}" class="btn btn-primary">ไปที่แดชบอร์ด</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>จัดการลูกค้า</h3>
+            <p>จัดการข้อมูลลูกค้า</p>
+            <a href="{% url 'accounts:customer_list' %}" class="btn btn-primary">จัดการลูกค้า</a>
+        </div>
+        {% elif user.user_type == 'technician' %}
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <h3>ปฏิทินงาน</h3>
+            <p>ดูตารางงานและการนัดหมาย</p>
+            <a href="{% url 'service:technician_calendar' %}" class="btn btn-primary">ดูปฏิทิน</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <h3>จัดการงาน</h3>
+            <p>อัพเดทสถานะและจัดการงาน</p>
+            <a href="{% url 'service:manage_requests' %}" class="btn btn-primary">จัดการงาน</a>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="mt-4">
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg me-3">เข้าสู่ระบบ</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary btn-lg">ลงทะเบียนสำหรับลูกค้า</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

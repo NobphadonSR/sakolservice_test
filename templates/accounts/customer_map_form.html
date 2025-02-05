@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    .btn-primary {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    .btn-success {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-success:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    #map {
+        height: 400px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .map-container {
+        position: relative;
+    }
+    .current-location {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+    }
+    .search-container {
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        right: 50px;
+        z-index: 1000;
+    }
+    /* เพิ่มต่อจาก CSS เดิม */
+    .search-box {
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        right: 50px;
+        z-index: 1000;
+    }
+    .current-location {
+        position: absolute;
+        top: 60px;
+        right: 10px;
+        z-index: 1000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">เลือกที่อยู่บนแผนที่</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="map-container mb-3">
+                            <div class="search-box">
+                                <div class="input-group">
+                                    <input type="text" id="search-input" class="form-control" placeholder="ค้นหาที่อยู่...">
+                                    <button type="button" class="btn btn-primary" onclick="searchLocation()">
+                                        <i class="fas fa-search"></i> ค้นหา
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary current-location" onclick="getCurrentLocation()">
+                                <i class="fas fa-location-arrow"></i> ตำแหน่งปัจจุบัน
+                            </button>
+                            <div id="map"></div>
+                        </div>
+                        <input type="hidden" name="latitude" id="latitude">
+                        <input type="hidden" name="longitude" id="longitude">
+                        <input type="hidden" name="location" id="location">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">ที่อยู่ที่เลือก:</label>
+                            <div id="selected-address" class="form-control"></div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> บันทึกที่อยู่
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    let map;
+    let marker;
+    
+    // ตั้งค่าแผนที่เริ่มต้น (กรุงเทพฯ)
+    const defaultLat = 13.7563;
+    const defaultLng = 100.5018;
+    
+    function initMap() {
+        map = L.map('map').setView([defaultLat, defaultLng], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // เพิ่ม marker เมื่อคลิกบนแผนที่
+        map.on('click', function(e) {
+            setMarkerPosition(e.latlng.lat, e.latlng.lng);
+        });
+    }
+    
+    function setMarkerPosition(lat, lng) {
+        if (marker) {
+            marker.remove();
+        }
+        
+        // ตรวจสอบค่าพิกัด
+        if (!lat || !lng) {
+            alert('กรุณาเลือกตำแหน่งบนแผนที่');
+            return;
+        }
+        
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // กำหนดค่าพิกัดให้กับ input fields
+        document.getElementById('latitude').value = parseFloat(lat).toFixed(6);
+        document.getElementById('longitude').value = parseFloat(lng).toFixed(6);
+        
+        // ดึงที่อยู่จากพิกัด
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                const address = data.display_name;
+                document.getElementById('selected-address').textContent = address;
+                document.getElementById('location').value = address;
+            });
+    }
+
+    // เพิ่มการตรวจสอบก่อนส่งฟอร์ม
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const lat = document.getElementById('latitude').value;
+        const lng = document.getElementById('longitude').value;
+        
+        if (!lat || !lng) {
+            e.preventDefault();
+            alert('กรุณาเลือกตำแหน่งบนแผนที่');
+        }
+    });
+    
+    function getCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 16);
+                    setMarkerPosition(lat, lng);
+                },
+                error => {
+                    alert('ไม่สามารถระบุตำแหน่งปัจจุบันได้');
+                }
+            );
+        } else {
+            alert('เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง');
+        }
+    }
+    
+    // เริ่มต้นแผนที่เมื่อโหลดหน้า
+    document.addEventListener('DOMContentLoaded', initMap);
+    function searchLocation() {
+    const searchInput = document.getElementById('search-input').value;
+    if (!searchInput) return;
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchInput)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length > 0) {
+                const location = data[0];
+                const lat = parseFloat(location.lat);
+                const lng = parseFloat(location.lon);
+                
+                map.setView([lat, lng], 16);
+                setMarkerPosition(lat, lng);
+            } else {
+                alert('ไม่พบที่อยู่ที่ค้นหา');
+            }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('เกิดข้อผิดพลาดในการค้นหา');
+            });
+    }
+
+    // เพิ่ม Event Listener สำหรับการกด Enter
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchLocation();
+        }
+    });
+</script>
+{% endblock %}

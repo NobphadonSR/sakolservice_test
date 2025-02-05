@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ปรับปรุงสไตล์หลัก */
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.08);
+        border-radius: 12px;
+    }
+    
+    .card-header {
+        background: linear-gradient(45deg, #084298, #0d6efd);
+        border-radius: 12px 12px 0 0 !important;
+        padding: 20px;
+    }
+    
+    .card-header h4 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    /* ปรับปรุงส่วนของฟอร์ม */
+    .form-section {
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    
+    .section-title {
+        color: #084298;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+        position: relative;
+    }
+    
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: #084298;
+    }
+
+    /* ปรับปรุง Input fields */
+    .form-control {
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+        border-color: #084298;
+        box-shadow: 0 0 0 0.2rem rgba(8, 66, 152, 0.15);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #344767;
+        margin-bottom: 8px;
+    }
+    
+    /* ปรับปรุงปุ่ม */
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(45deg, #084298, #0d6efd);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(45deg, #dc3545, #ff4d5b);
+        border: none;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    /* สไตล์สำหรับ required fields */
+    .required-field label:after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* สไตล์สำหรับ help text */
+    .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 6px;
+    }
+    
+    /* สไตล์สำหรับ error messages */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .error-message:before {
+        content: '\f071';
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+    }
+
+    /* เพิ่ม Loading state */
+    .form-loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .card-header {
+            padding: 15px;
+        }
+        
+        .form-section {
+            padding: 15px;
+        }
+        
+        .btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="loading-overlay d-none">
+    <div class="spinner-border text-primary"></div>
+</div>
+
+<div class="container-fluid mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ title }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" id="recordForm">
+                {% csrf_token %}
+                
+                <!-- ข้อมูลลูกค้า -->
+                <div class="form-section">
+                    <h5 class="section-title">ข้อมูลลูกค้า</h5>
+                    <div class="row">
+                        {% for field in form %}
+                            {% if field.name in 'customer,customer_name,customer_phone' %}
+                            <div class="col-md-4 mb-3 {% if field.field.required %}required-field{% endif %}">
+                                <label for="{{ field.auto_id }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% render_field field placeholder=field.help_text %}
+                                {% if field.errors %}
+                                <div class="error-message">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- ข้อมูลการบริการ -->
+                <div class="form-section">
+                    <h5 class="section-title">ข้อมูลการบริการ</h5>
+                    <div class="row">
+                        {% for field in form %}
+                            {% if field.name in 'job_number,date,time,description,status,bill_number' %}
+                            <div class="col-md-{% if field.name in 'description' %}12{% else %}4{% endif %} mb-3">
+                                <label for="{{ field.auto_id }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% render_field field placeholder=field.help_text %}
+                                {% if field.errors %}
+                                <div class="error-message">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- ข้อมูลโครงการ -->
+                <div class="form-section">
+                    <h5 class="section-title">ข้อมูลโครงการ</h5>
+                    <div class="row">
+                        {% for field in form %}
+                            {% if field.name in 'project_code,project_name,house_number,plot_number,house_type,transfer_date,warranty_expiry' %}
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ field.auto_id }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% render_field field placeholder=field.help_text %}
+                                {% if field.errors %}
+                                <div class="error-message">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- ข้อมูลการดำเนินการ -->
+                <div class="form-section">
+                    <h5 class="section-title">ข้อมูลการดำเนินการ</h5>
+                    <div class="row">
+                        {% for field in form %}
+                            {% if field.name in 'equipment_status,cause_found,solution,completion_status,technician_name,technician_phone,amount' %}
+                            <div class="col-md-{% if field.name in 'equipment_status,cause_found,solution' %}12{% else %}4{% endif %} mb-3">
+                                <label for="{{ field.auto_id }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% render_field field placeholder=field.help_text %}
+                                {% if field.errors %}
+                                <div class="error-message">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- หมายเหตุและรูปภาพ -->
+                <div class="form-section">
+                    <h5 class="section-title">หมายเหตุและรูปภาพ</h5>
+                    <div class="row">
+                        {% for field in form %}
+                            {% if field.name in 'notes,additional_notes,service_images' %}
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ field.auto_id }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {% render_field field placeholder=field.help_text %}
+                                {% if field.errors %}
+                                <div class="error-message">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary save-btn">
+                            <i class="fas fa-save"></i> บันทึก
+                        </button>
+                        <a href="{% url 'service:service_records' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                    </div>
+                    {% if object %}
+                    <a href="{% url 'service:record_delete' object.id %}" 
+                       class="btn btn-danger delete-btn"
+                       data-confirm="คุณต้องการลบรายการนี้ใช่หรือไม่?">
+                        <i class="fas fa-trash"></i> ลบ
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('recordForm');
+    const saveBtn = document.querySelector('.save-btn');
+    const loadingOverlay = document.querySelector('.loading-overlay');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // ตรวจสอบ validation ก่อนส่งฟอร์ม
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                return false;
+            }
+
+            // แสดง loading state
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
+            loadingOverlay.classList.remove('d-none');
+
+            // ส่งฟอร์มตามปกติ
+            return true;
+        });
+    }
+
+    // จัดการปุ่มลบ
+    const deleteBtn = document.querySelector('.delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm(this.dataset.confirm)) {
+                window.location.href = this.href;
+            }
+        });
+    }
+
+    // แสดง error messages จาก Django messages
+    {% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            alert("{{ message }}");
+        {% endif %}
+    {% endfor %}
+    {% endif %}
+});
+</script>
+{% endblock %}

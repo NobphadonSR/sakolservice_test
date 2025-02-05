@@ -1,0 +1,609 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="ระบบจัดการงานซ่อมบำรุง SAKOL SERVICE">
+        <meta name="theme-color" content="#084298">
+        <title>{% block title %}Sakol Service{% endblock %}</title>
+        {% csrf_token %}
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
+        
+        <!-- Google Fonts - Poppins -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+        
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        
+        <style>
+            :root {
+                --primary-color: #084298;
+                --secondary-color: #081a35;
+                --accent-color: #cfb763;
+                --tertiary-color: #92750a;
+                --gradient-primary: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+                --gradient-secondary: linear-gradient(45deg, var(--accent-color), var(--tertiary-color));
+            }
+            /* กำหนด font family หลักสำหรับทั้งเว็บไซต์ */
+            body {
+                font-family: 'Kanit', sans-serif;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                background-color: #f8f9fa;
+            }
+
+            /* Navbar Styles */
+            .navbar {
+                background: var(--gradient-primary) !important;
+                -webkit-backdrop-filter: blur(10px);
+                backdrop-filter: blur(10px);
+                border: none;
+                padding: 0.8rem 1rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            }
+            .bg-primary {
+                background-color: #084298 !important;
+            }
+            .navbar-logo {
+                height: 40px;
+                width: auto;
+                filter: brightness(0) invert(1);
+            }
+
+            .navbar-brand {
+                display: flex;
+                align-items: center;
+                padding: 0;
+                font-weight: 300;
+                font-size: 1.25rem;
+            }
+
+            .brand-text {
+                font-weight: 300;
+                margin-left: 0.5rem;
+            }
+
+            .navbar-toggler {
+                padding: 0.5rem;
+            }
+
+            .navbar-toggler:focus {
+                box-shadow: none;
+            }
+
+            .nav-link {
+                position: relative;
+                font-weight: 300;
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+                transition: all 0.3s ease;
+                border-radius: 8px;
+            }
+
+            .nav-link:hover {
+                background: rgba(255, 255, 255, 0.1);
+                transform: translateY(-2px);
+            }
+            /* เพิ่ม styles สำหรับรูปโปรไฟล์ */
+            .nav-link img.rounded-circle {
+                border: 2px solid #ffffff;
+                transition: all 0.3s ease;
+            }
+            
+            .nav-link:hover img.rounded-circle {
+                transform: scale(1.1);
+            }
+
+            .dropdown-toggle::after {
+                display: contents;
+            }
+            
+            .sticky-top {
+                position: static;
+                z-index: 1020;
+            }
+            .navbar-dark .navbar-nav .nav-link {
+                color: rgb(255 255 255);
+            }
+
+            /* Animation Updates */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .animate-in {
+                animation: fadeIn 0.6s ease forwards;
+            }
+
+            /* Mobile Styles */
+            @media (max-width: 991.98px) {
+                .col-md-9 {
+                    width: 100%;
+                }
+                .col-md-3 {
+                    width: 100%;
+                }
+                .navbar-logo {
+                    height: 32px;
+                }
+                .navbar-nav .nav-link img.rounded-circle {
+                    width: 28px;
+                    height: 28px;
+                }
+                .navbar-collapse {
+                    background: rgba(255, 255, 255, 1);
+                    /*-webkit-backdrop-filter: blur(10px);
+                    backdrop-filter: blur(10px);*/
+                    position: absolute;
+                    top: 56px;
+                    left: 0;
+                    right: 0;
+                    padding: 1rem;
+                    box-shadow: 0 3px 10px rgb(0 0 0 / 20%);
+                    border-radius: 15px;
+                    margin-top: 1rem;
+                    overflow-y: auto;
+                    transition: all 0.3s ease;
+                }
+                .navbar-dark .navbar-nav .nav-link {
+                    color: #084298;
+                    font-size: larger;
+                }
+                .navbar-dark .navbar-nav .nav-link:hover {
+                    color: #1c55a9;
+                }
+                .navbar-mobile-user {
+                    padding: 1rem;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .nav-link {
+                    font-weight: 400;
+                    padding: 0.75rem 1rem;
+                    border-radius: 4px;
+                    color: var(--primary-color) !important;
+                    margin: 0.3rem 0;
+                }
+
+                .nav-link:hover {
+                    background-color: rgba(255,255,255,0.1);
+                }
+
+                .nav-link.text-danger {
+                    color: #ff1229 !important;
+                    background-color: rgba(220, 53, 69, 0.1);
+                    margin-top: 0.5rem;
+                }
+
+                .nav-link.text-danger:hover {
+                    background-color: rgba(220, 53, 69, 0.2);
+                }
+            }
+            .fw-bold {  
+                font-weight: 400 !important;
+                font-size: larger;
+                color: #084298;
+            }
+            .text-light {
+                color: rgb(0 0 0) !important;
+                font-size: medium;
+            }
+            /* Desktop Dropdown Styles */
+            .dropdown-menu {
+                border: none;
+                box-shadow: 0 4px 6px rgba(0,0,0,.1);
+                padding: 0.5rem;
+                animation: slideIn 0.2s ease;
+            }
+
+            .dropdown-item {
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                font-weight: 400;
+                align-items: center;
+                /*font-size: large;*/
+            }
+
+            .dropdown-item:hover {
+                background-color: #f8f9fa;
+            }
+
+            .dropdown-divider {
+                margin: 0.5rem 0;
+            }
+
+            /* Card และ Container Styles */
+            .container {
+                max-width: 1200px;
+                padding: 0 1rem;
+            }
+
+            .card {
+                border: none;
+                border-radius: 15px;
+                overflow: hidden;
+                background: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                /*
+                
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                -webkit-backdrop-filter: blur(10px);
+                backdrop-filter: blur(10px);
+                */
+            }
+            /*
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            }
+            */
+            /* Button Styles */
+            .btn {
+                border-radius: 10px;
+
+                padding: 0.6rem 1.2rem;
+                font-weight: 400;
+                transition: all 0.3s ease;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /*
+            .btn-primary {
+                background: var(--gradient-primary);
+                border: none;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(8, 66, 152, 0.3);
+            }
+            */
+            /* Footer Update */
+            
+            .footer {
+                background: var(--gradient-primary);
+                color: white;
+                margin-top: 3rem;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .footer h5 {
+                color: white;
+                font-weight: 500;
+            }
+
+            /*.footer p {
+                color: rgba(200, 200, 200, 0.8);
+            }*/
+            .text-muted {
+                --bs-text-opacity: 1;
+                color: #bba44f !important;
+            }
+            /*.footer a {
+                color: #c8a952;
+            }*/
+            .footer .social-links a {
+                color: white;
+                margin-right: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .footer .social-links a:hover {
+                color: var(--accent-color);
+                transform: translateY(-3px);
+            }
+
+            .footer-copyright {
+                background-color: #084298;
+                color: white;
+                font-weight: 300;
+            }
+
+            .footer a {
+                color: #ffffff;
+                text-decoration: none;
+            }
+ 
+            .footer a:hover {
+                color: #cfb763;
+            }
+
+            /* Animation */
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <!-- Logo และชื่อแบรนด์ -->
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                <img src="{% static 'img/sokol_services_logo.png' %}" alt="Sakol Services Logo" class="navbar-logo me-2">
+                <!--<span class="brand-text d-none d-sm-inline">SAKOL SERVICE</span>-->
+            </a>
+            {% if user.is_authenticated %}
+            <!-- ปุ่ม Toggle สำหรับมือถือ -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- เมนูหลัก -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-mobile-user d-lg-none">
+                    <!-- ส่วนแสดงข้อมูลผู้ใช้บนมือถือ -->
+                    <div class="user-info mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            {% if user.profile_image %}
+                                <img src="{{ user.profile_image.url }}" class="rounded-circle me-2" alt="Profile" style="width: 64px; height: 64px; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'img/default-profile.png' %}" class="rounded-circle me-2" alt="Default Profile" style="width: 64px; height: 64px; object-fit: cover;">
+                            {% endif %}
+                            {% if user.user_type == 'customer' or user.user_type == 'technician' %}
+                            <div>
+                                <div class="fw-bold">{{ user.username }}</div>
+                                <!--<div class="text-light">{{ user.email }}</div>-->
+                                <small class="text-light">{{ user.get_user_type_display }}</small>
+                            </div>
+                            {% else %}
+                            <div>
+                                <div class="fw-bold">{{ user.username }}</div>
+                                <!--<div class="text-light">{{ user.email }}</div>-->
+                                <small class="text-light">{{ user.get_user_type_display }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- เมนูหลัก -->
+                <ul class="navbar-nav me-auto">
+                    {% if user.user_type == 'customer' %}
+                    <li class="nav-item"></li>
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:request_list' %}">
+                            <!--<i class="fa-solid fa-list me-2"></i>-->
+                            <span>รายการแจ้งซ่อม</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:create_request' %}">
+                            <!--<i class="fa-solid fa-screwdriver-wrench me-2"></i>-->
+                            <span>แจ้งซ่อม</span>
+                        </a>
+                    </li>
+                    
+                    {% elif user.user_type == 'service' %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:dashboard' %}">
+                            <!--<i class="fa-solid fa-chart-line me-2"></i>-->
+                            <span>แดชบอร์ด</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:manage_requests' %}">
+                            <!--<i class="fa-solid fa-screwdriver-wrench me-2"></i>-->
+                            <span>จัดการการแจ้งซ่อม</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:technician_daily_summary' %}">
+                            <span>สรุปงานประจำวัน</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'service:customer_map' %}">
+                            <span>แผนที่ลูกค้า</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:service_records' %}">
+                            <!--<i class="fas fa-solid fa-table-list me-2"></i>-->
+                            <span>รายการบันทึก</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/admin/">
+                            <!--<i class="fa-solid fa-users-gear me-2"></i>-->
+                            <span>จัดการข้อมูลทั้งหมด</span>
+                        </a>
+                    </li>
+                    {% elif user.user_type == 'technician' %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:technician_calendar' %}">
+                            <!--<i class="fas fa-calendar-alt me-2"></i>-->
+                            <span>ปฏิทินงาน</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:technician_daily_summary' %}">
+                            <!--<i class="fas fa-calendar-day me-2"></i>-->
+                            <span>สรุปงานประจำวัน</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{% url 'service:manage_requests' %}">
+                            <!--<i class="fa-solid fa-screwdriver-wrench me-2"></i>-->
+                            <span>จัดการการแจ้งซ่อม</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'service:customer_map' %}">
+                            <span>แผนที่ลูกค้า</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- เมนูผู้ใช้ -->
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <!-- เพิ่มส่วนแสดงรูปโปรไฟล์ -->
+                            {% if user.profile_image %}
+                                <img src="{{ user.profile_image.url }}" class="rounded-circle me-2" alt="Profile" style="width: 32px; height: 32px; object-fit: cover;">
+                                <!--<i class="fa-solid fa-user fa-xl me-2"></i>-->
+                                {% else %}
+                                <img src="{% static 'img/default-profile.png' %}" class="rounded-circle me-2" alt="Default Profile" style="width: 32px; height: 32px; object-fit: cover;">
+                            {% endif %}
+                            <span class="d-none d-md-inline">{{ user.username }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                    <i class="fa-solid fa-user me-2"></i>
+                                    โปรไฟล์ของ {{ user.username }}
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-sign-out-alt me-2"></i>ออกจากระบบ
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- เมนูสำหรับมือถือ -->
+                    <div class="d-lg-none">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{% url 'accounts:profile' %}">
+                                <!--{% if user.profile_image %}
+                                    <img src="{{ user.profile_image.url }}" class="rounded-circle me-2" alt="Profile" style="width: 24px; height: 24px; object-fit: cover;">
+                                {% else %}
+                                    <i class="fas fa-user me-2"></i>
+                                {% endif %}-->
+                                <span>โปรไฟล์</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-link d-flex align-items-center text-danger w-100 border-0 bg-transparent">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    <span>ออกจากระบบ</span>
+                                </button>
+                            </form>
+                        </li>
+                    </div>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content Container -->
+    <div class="container my-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row py-4">
+                <!-- คอลัมน์ที่ 1: เกี่ยวกับเรา -->
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-3">กลุ่มบริษัทสากล SAKOL GROUP</h5>
+                    <p class="text-muted">
+                        "สากล" ก้าวสู่ความเป็นกลุ่มบริษัทผู้ให้บริการด้านระบบไฟฟ้า
+                        ที่ได้รับความไว้วางใจจากลูกค้า ร้านค้า และกลุ่มผู้ใช้งาน
+                        โครงการอย่างกว้างขวางในปัจจุบัน
+                    </p>
+                </div>
+
+                <!-- คอลัมน์ที่ 2: ติดต่อเรา -->
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-3">ติดต่อเรา</h5>
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        1296/97-99 ถนนกรุงเทพฯ-นนทบุรี แขวงบางชื่อ เขตบางซื่อ กรุงเทพมหานคร 10800
+                    </p>
+                    <p class="mb-2">              
+                        <a href="tel:029112970" class="text-decoration-none"><i class="fas fa-phone me-2"></i>02-911-2970-8</a>
+                    </p>
+                    <p class="mb-2">
+                        <a href="tel:029112969" class="text-decoration-none"><i class="fas fa-fax me-2"></i>02-911-2969</a>
+                    </p>
+                    <p class="mb-2">
+                        <a href="mailto:info@sakolgroup.com" class="text-decoration-none"><i class="fas fa-envelope me-2"></i>info@sakolgroup.com</a>
+                    </p>
+                </div>
+
+                <!-- คอลัมน์ที่ 3: Social Media -->
+                <div class="col-md-4 mb-4">
+                    <h5 class="mb-3">ติดตามเรา</h5>
+                        <p class="mb-2">
+                            <a href="https://www.facebook.com/sakolgroup" target="_blank" class="me-2">
+                                <i class="fab fa-facebook me-2"></i>
+                                Facebook
+                            </a>
+                        </p>
+                        <p class="mb-2">
+                            <a href="https://page.line.me/?accountId=ueu8363p" target="_blank" class="me-2">
+                                <i class="fab fa-line me-2"></i>
+                                LINE
+                            </a>
+                        </p>
+                        <p class="mb-2">
+                            <a href="https://www.tiktok.com/@sakolonline" target="_blank" class="me-2">
+                                <i class="fab fa-tiktok me-2"></i>
+                                TikTok
+                            </a>
+                        </p>
+                        <p class="mb-2">                           
+                            <a href="https://shopee.co.th/shop/73097642" target="_blank" class="me-2">
+                                <i class="fas fa-shopping-bag me-2"></i>
+                                Shopee
+                            </a>
+                        </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Copyright -->
+        <div class="footer-copyright py-3">
+            <div class="container text-center">
+                <small>© Copyright {% now "Y" %} www.sakolgroup.com all rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Moment.js สำหรับจัดการเวลา -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/th.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

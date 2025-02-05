@@ -1,0 +1,848 @@
+{% extends 'base.html' %}
+
+{% block title %}รายการบันทึกการบริการ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        background-color: #ffffff;
+        color: #084298;
+    }
+    .btn-danger {
+        background-color: #c62334;
+        border-color: #c62334;
+    }
+    .btn-danger:hover {
+        background-color: #ffffff;
+        color: #c62334;
+    }
+    .btn-success {
+        color: #ffffff;
+        background-color: #317d5a;
+        border-color: #317d5a;
+    }
+    .btn-success:hover {
+        background-color: #ffffff;
+        color: #317d5a;
+    }
+    /* เพิ่มสไตล์ใหม่สำหรับ upload zone */
+    .upload-zone {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        text-align: center;
+        background: #f8f9fa;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .upload-zone:hover {
+        border-color: #084298;
+        background: #e9ecef;
+    }
+
+    .upload-zone.dragover {
+        border-color: #084298;
+        background: #e3f2fd;
+    }
+
+    .file-info {
+        margin-top: 10px;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .progress {
+        margin-top: 10px;
+        display: none;
+    }
+
+    .template-download {
+        margin-top: 10px;
+        font-size: 0.9em;
+    }
+    .table-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .table {
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table th:last-child, 
+    .table td:last-child {
+        min-width: 100px;
+        width: 100px;
+        position: sticky;
+        right: 0;
+        background-color: #fff;
+        z-index: 1;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    }
+
+    .table th:last-child {
+        background-color: #f8f9fa;
+    }
+
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 12px 8px;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table tbody td {
+        padding: 8px;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .table tbody tr:hover td:last-child {
+        background-color: #f5f9ff;
+    }
+
+    /* ปรับแต่งขนาดไอคอน */
+    .btn-group .btn i {
+        font-size: 12px;
+    }
+
+    .btn-group {
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-group .btn {
+        pointer-events: auto;
+    }
+
+    .table-responsive {
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
+        border-radius: 8px;
+    }
+
+    /* ปรับแต่งแถบเลื่อน */
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    .mt-3 {
+        margin-left: 1rem;
+    }
+    /* สถานะ */
+    .badge {
+        padding: 6px 10px;
+        font-weight: 500;
+        border-radius: 4px;
+    }
+
+    .badge.bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000;
+    }
+
+    /* ปุ่มดำเนินการ */
+    .btn-group {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        flex-wrap: nowrap;
+    }
+
+    .btn-group .btn {
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 1;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    /* ปรับแต่งปุ่มทั่วไป */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn i {
+        font-size: 14px;
+    }
+    .btn-sm {
+        font-size: 0.8rem;
+    }
+    .btn-warning {
+        background: #ffc107;
+        color: #ffffff;
+    }
+    .btn-warning:hover {
+        background: #ffffff;
+        color: #ffc107;
+        border-color: #ffc107;
+    }
+    /* ช่องค้นหา */
+    .search-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        max-width: 300px;
+        border-radius: 4px;
+    }
+
+    /* จัดการคอลัมน์ที่สำคัญ */
+    .table td:nth-child(1), /* ลำดับ */
+    .table td:nth-child(2), /* สถานะ */
+    .table td:nth-child(7), /* เลขงาน */
+    .table td:nth-child(9) { /* ชื่อลูกบ้าน */
+        font-weight: 500;
+    }
+
+    /* ข้อความที่ถูกตัด */
+    .truncate {
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* ปรับปรุงสไตล์การแบ่งหน้า */
+    .pagination {
+        gap: 5px;
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+
+    .page-item .page-link {
+        border-radius: 4px;
+        color: #084298;
+        min-width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        font-weight: 500;
+    }
+
+    .page-item.active .page-link {
+        background-color: #084298;
+        border-color: #084298;
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #f8f9fa;
+    }
+    .mx-2 {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    .btn-outline-primary {
+        background-color: #084298;
+        color: #ffffff;
+        border-color: #084298;
+    }
+    .btn-outline-primary:hover {
+        background-color: #ffffff;
+        color: #084298;
+    }
+    /* ปรับปรุงส่วนของปุ่มในส่วนหัว */
+    @media (max-width: 768px) {
+        .card-header .d-flex {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-header .d-flex > div {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-header .btn {
+            width: 100%;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .card-header h5 {
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .mt-3 {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .mt-3 p {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .mt-3 .mx-2 {
+            display: none;
+        }
+        
+        /* ปรับแต่งปุ่มแบ่งหน้า */
+        .pagination {
+            gap: 3px;
+            justify-content: center;
+            margin: 0;
+            padding: 15px 0;
+        }
+
+        .page-link {
+            min-width: 35px;
+            height: 35px;
+            font-size: 0.9rem;
+            padding: 0 8px;
+        }
+
+        /* ซ่อนบางส่วนบนมือถือ */
+        .page-item:not(.active):not(:first-child):not(:last-child) {
+            display: none;
+        }
+
+        /* แสดงเฉพาะปุ่มสำคัญ */
+        .page-item:first-child,
+        .page-item:last-child,
+        .page-item.active {
+            display: flex;
+        }
+    }
+
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">รายการบันทึกการบริการ</h5>
+            <div class="action-buttons">
+                <a href="{% url 'service:create_record' %}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>เพิ่มบันทึกใหม่</span>
+                </a>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#uploadExcelModal">
+                    <i class="fas fa-file-excel"></i>
+                    <span>นำเข้าข้อมูล Excel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-container mb-3">
+        <form method="get" class="d-flex align-items-center">
+            <div class="input-group">
+                <input type="text" 
+                       name="search" 
+                       class="form-control" 
+                       placeholder="ค้นหาจาก: ชื่อลูกค้า, เลขงาน, เบอร์โทร, รหัสโครงการ, ชื่อโครงการ และ บ้านเลขที่" 
+                       value="{{ request.GET.search }}">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-search"></i> ค้นหา
+                </button>
+            </div>
+        </form>
+        {% if request.GET.search %}
+            <div class="mt-2">
+                <small class="text-muted">
+                    ผลการค้นหาสำหรับ: "{{ request.GET.search }}"
+                    <a href="{% url 'service:service_records' %}" class="text-decoration-none">
+                        <i class="fas fa-times"></i> ล้างการค้นหา
+                    </a>
+                </small>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ลำดับ</th>
+                        <th>สถานะจบงาน</th>
+                        <th>ปี พ.ศ.</th>
+                        <th>วดป.</th>
+                        <th>ด.</th>
+                        <th>เวลา</th>
+                        <th>เลขงาน</th>
+                        <th>ชื่อลูกบ้าน</th>
+                        <th>เบอร์ติดต่อ</th>
+                        <th>จนท.</th>
+                        <th>เบอร์ติดต่อ จนท.</th>
+                        <th>รหัสโครงการ</th>
+                        <th>โครงการ</th>
+                        <th>บ้านเลขที่</th>
+                        <th>แปลง</th>
+                        <th>แบบ</th>
+                        <th>โอน</th>
+                        <th>วันที่หมดประกัน</th>
+                        <th>อาการรับแจ้ง</th>
+                        <th>สถานะ</th>
+                        <th>วันนัด</th>
+                        <th>เวลานัด</th>
+                        <th>วัสดุ/อุปกรณ์ที่ผิดปกติ</th>
+                        <th>สาเหตุที่ตรวจพบ</th>
+                        <th>การแก้ไข</th>
+                        <th>ชื่อ</th>
+                        <th>หมายเหตุ</th>
+                        <th>จำนวน</th>
+                        <th>รูปภาพ</th>
+                        <th>หมายเหตุเพิ่มเติม</th>
+                        <th>การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <!-- แก้ไขส่วน tbody ในตาราง -->
+                <tbody>
+                    {% for item in records_with_index %}
+                    <tr style="cursor: pointer;" onclick="window.location.href='{% url 'service:record_detail' item.record.id %}'">
+                        <td>{{ item.index }}</td>
+                        <td>
+                            {% if item.record.completion_status %}
+                                <span class="badge bg-success">จบงาน</span>
+                            {% else %}
+                                <span class="badge 
+                                    {% if item.record.status == 'pending' %}bg-warning
+                                    {% elif item.record.status == 'confirmed' %}bg-info
+                                    {% elif item.record.status == 'assigned' %}bg-primary
+                                    {% elif item.record.status == 'accepted' %}bg-info
+                                    {% elif item.record.status == 'traveling' %}bg-primary
+                                    {% elif item.record.status == 'arrived' %}bg-purple
+                                    {% elif item.record.status == 'fixing' %}bg-orange
+                                    {% elif item.record.status == 'cancelled' %}bg-danger
+                                    {% elif item.record.status == 'rescheduled' %}bg-warning
+                                    {% else %}bg-warning{% endif %}">
+                                    {% if item.record.status == 'pending' %}รอดำเนินการ
+                                    {% elif item.record.status == 'confirmed' %}ยืนยันการแจ้งซ่อม
+                                    {% elif item.record.status == 'assigned' %}มอบหมายงานแล้ว
+                                    {% elif item.record.status == 'accepted' %}รับงาน
+                                    {% elif item.record.status == 'traveling' %}กำลังเดินทาง
+                                    {% elif item.record.status == 'arrived' %}ถึงจุดหมาย
+                                    {% elif item.record.status == 'fixing' %}กำลังแก้ไข
+                                    {% elif item.record.status == 'cancelled' %}ยกเลิก
+                                    {% elif item.record.status == 'rescheduled' %}เลื่อนนัด
+                                    {% else %}รอดำเนินการ{% endif %}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.record.year }}</td>
+                        <td>{{ item.record.date|date:"d/m/Y" }}</td>
+                        <td>{{ item.record.month }}</td>
+                        <td>{{ item.record.time }}</td>
+                        <td>{{ item.record.job_number }}</td>
+                        <td>{{ item.record.customer_name }}</td>
+                        <td>{{ item.record.customer_phone|default:"-" }}</td>
+                        <td>{{ item.record.technician_name|default:"-" }}</td>
+                        <td>{{ item.record.technician_phone|default:"-" }}</td>
+                        <td>{{ item.record.project_code|default:"-" }}</td>
+                        <td>{{ item.record.project_name }}</td>
+                        <td>{{ item.record.house_number }}</td>
+                        <td>{{ item.record.plot_number|default:"-" }}</td>
+                        <td>{{ item.record.house_type|default:"-" }}</td>
+                        <td>{{ item.record.transfer_date|default:"-" }}</td>
+                        <td>{{ item.record.warranty_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td class="truncate">{{ item.record.description }}</td>
+                        <td>
+                            {% if item.record.completion_status %}
+                                <span class="badge bg-success">จบงาน</span>
+                            {% else %}
+                                <span class="badge 
+                                    {% if item.record.status == 'pending' %}bg-warning
+                                    {% elif item.record.status == 'confirmed' %}bg-info
+                                    {% elif item.record.status == 'assigned' %}bg-primary
+                                    {% elif item.record.status == 'accepted' %}bg-info
+                                    {% elif item.record.status == 'traveling' %}bg-primary
+                                    {% elif item.record.status == 'arrived' %}bg-purple
+                                    {% elif item.record.status == 'fixing' %}bg-orange
+                                    {% elif item.record.status == 'completed' %}bg-success
+                                    {% elif item.record.status == 'cancelled' %}bg-danger
+                                    {% elif item.record.status == 'rescheduled' %}bg-warning
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ item.record.status|default:"รอดำเนินการ" }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.record.appointment_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{{ item.record.appointment_time|default:"-" }}</td>
+                        <td class="truncate">{{ item.record.equipment_status|default:"-" }}</td>
+                        <td class="truncate">{{ item.record.cause_found|default:"-" }}</td>
+                        <td class="truncate">{{ item.record.solution|default:"-" }}</td>
+                        <td>{{ item.record.name|default:"-" }}</td>
+                        <td class="truncate">{{ item.record.notes|default:"-" }}</td>
+                        <td>{{ item.record.quantity|default:"0" }}</td>
+                        <td>
+                            {% if item.record.service_images %}
+                                <a href="{{ item.record.service_images }}" target="_blank">
+                                    <i class="fas fa-images"></i>
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="truncate">{{ item.record.additional_notes|default:"-" }}</td>
+                        <td onclick="event.stopPropagation()">
+                            <div class="btn-group">
+                                <a href="{% url 'service:record_edit' item.record.id %}" 
+                                   class="btn btn-warning"
+                                   title="แก้ไข">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'service:record_delete' item.record.id %}" 
+                                   class="btn btn-danger" 
+                                   onclick="return confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')"
+                                   title="ลบ">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="32" class="text-center">ไม่พบข้อมูล</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ส่วนแสดงข้อมูลจำนวนรายการ -->
+        <div class="mt-3">
+            <p class="mb-0">
+                <span><strong>จำนวนรายการทั้งหมด:</strong> {{ total_records }} รายการ</span>
+                <span><strong>หน้าปัจจุบัน:</strong> {{ current_page }}</span>
+                <span>
+                    <strong>แสดง:</strong> 
+                    {% with start=start_index|add:1 %}
+                        {% with end=start_index|add:records.count %}
+                            {{ start }} - {{ end }} จาก {{ total_records }} รายการ
+                        {% endwith %}
+                    {% endwith %}
+                </span>
+            </p>
+        </div>
+
+        <!-- ส่วนการแบ่งหน้า -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if page_obj.number > 3 %}
+                <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- แทนที่ Modal เดิมด้วยอันใหม่ -->
+<div class="modal fade" id="uploadExcelModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-excel"></i> นำเข้าข้อมูล Excel
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- ดาวน์โหลดเทมเพลต -->
+                <div class="template-download mb-4">
+                    <a href="{% url 'service:download_template' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> ดาวน์โหลดเทมเพลต Excel
+                    </a>
+                    <small class="text-muted ms-2">
+                        ดาวน์โหลดเทมเพลตเพื่อดูรูปแบบข้อมูลที่ถูกต้อง
+                    </small>
+                </div>
+
+                <form id="uploadExcelForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Upload Zone -->
+                    <div class="upload-zone" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                        <h5>ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์</h5>
+                        <p class="text-muted">รองรับไฟล์ .xlsx, .xls, .csv</p>
+                        <input type="file" 
+                               id="excel_file" 
+                               name="excel_file" 
+                               accept=".xlsx,.xls,.csv"
+                               style="display: none;">
+                    </div>
+
+                    <!-- File Info -->
+                    <div id="fileInfo" class="file-info" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-excel"></i>
+                                <span id="fileName">ไม่ได้เลือกไฟล์</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Preview Table -->
+                    <div id="previewData" class="mt-4" style="display: none;">
+                        <h6>ตัวอย่างข้อมูล</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead id="previewHeader"></thead>
+                                <tbody id="previewBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" id="submitUpload" disabled>
+                    นำเข้าข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- เพิ่ม XLSX library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// คงฟังก์ชัน confirmDelete เดิมไว้
+function confirmDelete(url) {
+    if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+        window.location.href = url;
+    }
+}
+
+// เพิ่ม JavaScript ใหม่
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('excel_file');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const removeFile = document.getElementById('removeFile');
+const submitBtn = document.getElementById('submitUpload');
+const previewData = document.getElementById('previewData');
+const progressBar = document.querySelector('.progress');
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    dropZone.classList.add('dragover');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('dragover');
+}
+
+dropZone.addEventListener('drop', handleDrop, false);
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFiles);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles({ target: { files: files } });
+}
+
+function handleFiles(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const validTypes = ['.xlsx', '.xls', '.csv'];
+        const fileType = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        if (!validTypes.includes(fileType)) {
+            alert('กรุณาอัพโหลดไฟล์ Excel หรือ CSV เท่านั้น');
+            return;
+        }
+
+        fileName.textContent = file.name;
+        fileInfo.style.display = 'block';
+        submitBtn.disabled = false;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+            showPreview(jsonData);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function showPreview(data) {
+    if (data.length === 0) return;
+
+    const headers = data[0];
+    const rows = data.slice(1, 6); // แสดง 5 แถวแรก
+
+    const headerHTML = `
+        <tr>
+            ${headers.map(h => `<th>${h}</th>`).join('')}
+        </tr>
+    `;
+
+    const bodyHTML = rows.map(row => `
+        <tr>
+            ${row.map(cell => `<td>${cell}</td>`).join('')}
+        </tr>
+    `).join('');
+
+    document.getElementById('previewHeader').innerHTML = headerHTML;
+    document.getElementById('previewBody').innerHTML = bodyHTML;
+    previewData.style.display = 'block';
+}
+
+removeFile.addEventListener('click', () => {
+    fileInput.value = '';
+    fileInfo.style.display = 'none';
+    previewData.style.display = 'none';
+    submitBtn.disabled = true;
+});
+
+document.getElementById('submitUpload').addEventListener('click', function() {
+    const formData = new FormData(document.getElementById('uploadExcelForm'));
+    progressBar.style.display = 'block';
+
+    fetch('{% url "service:upload_excel" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('นำเข้าข้อมูลสำเร็จ');
+            location.reload();
+        } else {
+            alert(data.message || 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล');
+        }
+    })
+    .catch(error => {
+        alert('เกิดข้อผิดพลาด: ' + error);
+    })
+    .finally(() => {
+        progressBar.style.display = 'none';
+    });
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

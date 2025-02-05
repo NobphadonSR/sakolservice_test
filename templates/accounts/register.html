@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - สมัครสมาชิก{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        background-color: #084298;
+        border-color: #084298;
+        color: #fff; 
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    /* ปรับแต่งสไตล์ของฟอร์ม */
+    .form-control {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+    /* สำหรับ textarea */
+    textarea.form-control {
+        height: auto;
+        min-height: 100px;
+    }
+    /* ปรับความกว้างของ container */
+    .card {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    /* จัดระยะห่างของ label */
+    .form-label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    /* สไตล์สำหรับข้อความ error */
+    .errorlist {
+        color: #dc3545;
+        list-style: none;
+        padding: 0;
+        margin: 0.25rem 0;
+        font-size: 0.875rem;
+    }
+    /* เพิ่ม CSS สำหรับฟิลด์ใหม่ */
+    .customer-fields {
+        display: none;
+    }
+    
+    .customer-fields.active {
+        display: block;
+    }
+    
+    select.form-control {
+        height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">ลงทะเบียนผู้ใช้บริการ</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- ข้อมูลผู้ใช้พื้นฐาน -->
+                    {% for field in form %}
+                        {% if field.name == 'username' %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    ชื่อลูกค้า
+                                    <span style="color: red;">*</span>
+                                </label>
+                                {% if field.errors %}
+                                    <div class="alert alert-danger">{{ field.errors }}</div>
+                                {% endif %}
+                                <input type="{{ field.field.widget.input_type }}" 
+                                       name="{{ field.name }}" 
+                                       class="form-control" 
+                                       id="{{ field.id_for_label }}" 
+                                       value="{{ field.value|default:'' }}"
+                                       required>
+                                <small class="form-text text-muted">
+                                    กรุณากรอกชื่อของคุณ
+                                </small>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- ข้อมูลลูกค้า -->
+                    {% for field in form %}
+                        {% if field.name not in 'username,password1,password2' %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }} <span style="color: red;">*</span> </label>
+                                {% if field.errors %}
+                                    <div class="alert alert-danger">{{ field.errors }}</div>
+                                {% endif %}
+                                
+                                {% if field.name == 'location' %}
+                                    <textarea name="{{ field.name }}" 
+                                              class="form-control" 
+                                              id="{{ field.id_for_label }}" 
+                                              rows="3"
+                                              required>{{ field.value|default:'' }}</textarea>
+                                {% elif field.name in 'problem_type' %}
+                                    <select name="{{ field.name }}" 
+                                            class="form-control" 
+                                            id="{{ field.id_for_label }}"
+                                            required>
+                                        <option value="">เลือก{{ field.label }}</option>
+                                        {% for value, text in field.field.choices %}
+                                            <option value="{{ value }}" 
+                                                    {% if field.value == value %}selected{% endif %}>
+                                                {{ text }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <input type="text" 
+                                           name="{{ field.name }}" 
+                                           class="form-control" 
+                                           id="{{ field.id_for_label }}" 
+                                           value="{{ field.value|default:'' }}"
+                                           required>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- ช่องกรอกรหัสผ่าน -->
+                    {% for field in form %}
+                        {% if field.name == 'password1' or field.name == 'password2' %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    <span style="color: red;">*</span>
+                                </label>
+                                {% if field.errors %}
+                                    <div class="alert alert-danger">{{ field.errors }}</div>
+                                {% endif %}
+                                <input type="password"
+                                       name="{{ field.name }}"
+                                       class="form-control"
+                                       id="{{ field.id_for_label }}"
+                                       required>
+                                {% if field.name == 'password1' %}
+                                    <small class="form-text text-muted">
+                                        รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร และต้องมีตัวอักษรพิมพ์เล็กหรือตัวอักษรพิมพ์ใหญ่ พร้อมกับตัวเลข หรือสัญลักษณ์พิเศษ เช่น !@#$%^&*()_+-=[]{}|;:,.<>?
+                                    </small>
+                                {% else %}
+                                    <small class="form-text text-muted">
+                                        กรุณากรอกรหัสผ่านอีกครั้ง
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">สมัครสมาชิก</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeSelect = document.querySelector('select[name="user_type"]');
+    const customerFields = document.getElementById('customer-fields');
+
+    function toggleCustomerFields() {
+        if (userTypeSelect.value === 'customer') {
+            customerFields.classList.add('active');
+            // เพิ่ม required attribute
+            document.querySelectorAll('#customer-fields select').forEach(field => {
+                field.required = true;
+            });
+        } else {
+            customerFields.classList.remove('active');
+            // ลบ required attribute
+            document.querySelectorAll('#customer-fields select').forEach(field => {
+                field.required = false;
+            });
+        }
+    }
+
+    userTypeSelect.addEventListener('change', toggleCustomerFields);
+    toggleCustomerFields(); // เรียกฟังก์ชันครั้งแรก
+});
+</script>
+{% endblock %}

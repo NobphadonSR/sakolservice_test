@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sakol Service - สรุปงานประจำวัน{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .btn-outline-primary {
+        color: #084298;
+        border-color: #084298;
+    }
+    .btn-outline-primary:hover {
+        background-color: #084298;
+        border-color: #084298;
+        color: #fff;
+    }
+    .progress {
+        height: 20px;
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.6s ease;
+    }
+    [class*="progress-width-"] {
+        width: var(--width);
+    }
+    {% for tech in technician_stats %}
+    .progress-width-{{ tech.completion_rate }} {
+        --width: {{ tech.completion_rate }}%;
+    }
+    {% endfor %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- ส่วนหัว -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>สรุปงานวันที่ {{ selected_date|date:"d/m/Y" }}</h2>
+        <div class="btn-group">
+            <a href="?date={{ prev_date|date:'Y-m-d' }}" class="btn btn-outline-primary">
+                <i class="fas fa-chevron-left"></i> วันก่อนหน้า
+            </a>
+            <a href="?date={{ next_date|date:'Y-m-d' }}" class="btn btn-outline-primary">
+                วันถัดไป <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- สรุปภาพรวม -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">งานทั้งหมด</h5>
+                    <h2 class="card-text text-primary">{{ total_jobs }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">อัตราความสำเร็จ</h5>
+                    <h2 class="card-text text-success">{{ completion_rate|floatformat:1 }}%</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">รายได้รวม</h5>
+                    <h2 class="card-text text-info">{{ total_revenue|floatformat:2 }} บาท</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- เพิ่มหลังจากส่วนสรุปภาพรวม และก่อนส่วนรายการงาน -->
+    {% if is_service and technician_stats %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">สรุปงานแยกตามช่าง</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ชื่อช่าง</th>
+                            <th class="text-center">งานทั้งหมด</th>
+                            <th class="text-center">งานเสร็จ</th>
+                            <th class="text-center">อัตราความสำเร็จ</th>
+                            <th class="text-end">รายได้</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tech in technician_stats %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-user-cog text-primary me-2"></i>
+                                {{ tech.name }}
+                            </td>
+                            <td class="text-center">{{ tech.total_jobs }}</td>
+                            <td class="text-center">{{ tech.completed_jobs }}</td>
+                            <td class="text-center">
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" 
+                                        role="progressbar" 
+                                        style="width: {{ tech.completion_rate }}%;"
+                                        aria-valuenow="{{ tech.completion_rate }}" 
+                                        aria-valuemin="0"
+                                        aria-valuemax="100">
+                                        {{ tech.completion_rate|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-end">{{ tech.total_revenue|floatformat:2 }} บาท</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                ไม่พบข้อมูลช่าง
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- คอลัมน์ซ้าย: รายการงาน -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">รายการงานวันนี้</h5>
+                </div>
+                <div class="card-body">
+                    {% for job in daily_jobs %}
+                    <div class="job-item mb-3 p-3 border rounded {% if job.status == 'completed_cash' or job.status == 'completed_call' %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="mb-0">{{ job.customer_name }}</h5>
+                                    <span class="badge bg-{{ job.status_color }} ms-2">
+                                        {{ job.get_status_display }}
+                                    </span>
+                                </div>
+                                {% if is_service %}
+                                <p class="mb-1">
+                                    <i class="fas fa-user-cog text-muted me-2"></i>
+                                    ช่าง: {{ job.technician_name }}
+                                </p>
+                                {% endif %}
+                                <p class="mb-1">
+                                    <i class="fas fa-clock text-muted me-2"></i>
+                                    {{ job.formatted_time }}
+                                </p>
+                                <!-- แทนที่ส่วนที่แสดงที่อยู่เดิม -->
+                                <p class="mb-1">
+                                    <i class="fas fa-building text-muted me-2"></i>
+                                    โครงการ: {{ job.customer.project_name|default:"ไม่ระบุโครงการ" }}
+                                    {% if job.customer.plot_number %}
+                                    <small class="text-muted">(แปลงที่ {{ job.customer.plot_number }})</small>
+                                    {% endif %}
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                    {% if job.customer.house_number %}บ้านเลขที่ {{ job.customer.house_number }}{% endif %}
+                                    <!--{{ job.address|default:"ไม่ระบุที่อยู่" }}-->
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-tools text-muted me-2"></i>
+                                    {{ job.description|default:"ไม่มีรายละเอียด" }}
+                                </p>
+                                {% if job.estimated_cost %}
+                                <p class="mb-1">
+                                    <i class="fas fa-coins text-muted me-2"></i>
+                                    ค่าบริการ: {{ job.estimated_cost|floatformat:2 }} บาท
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="ms-3">
+                                <a href="{% url 'service:request_detail' job.id %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>
+                                    รายละเอียด
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">ไม่มีงานในวันนี้</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- คอลัมน์ขวา: ไทม์ไลน์และสถานะ -->
+        <div class="col-md-4">
+            <!-- สถานะงาน -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">สถานะงาน</h5>
+                </div>
+                <div class="card-body">
+                    {% for status in job_summary %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-{{ status.status_color }}">
+                            {{ status.status_display }}
+                        </span>
+                        <span>{{ status.count }} งาน</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">ไม่มีข้อมูลสถานะ</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ไทม์ไลน์การอัพเดท -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">ไทม์ไลน์การอัพเดท</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for status in job_timeline %}
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker bg-{{ status.get_status_color }}"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        {{ status.created_at|time:"H:i" }}
+                                    </small>
+                                    <small class="badge bg-{{ status.get_status_color }}">
+                                        {{ status.get_status_display }}
+                                    </small>
+                                </div>
+                                {% if is_service %}
+                                <small class="text-muted d-block">
+                                    ช่าง: {{ status.technician.customer.customer_name }}
+                                </small>
+                                {% endif %}
+                                <p class="mb-1">
+                                    <strong>{{ status.service_request.customer.customer_name }}</strong>
+                                </p>
+                                <p class="mb-0 text-muted">{{ status.notes|default:"ไม่มีรายละเอียด" }}</p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">ไม่มีการอัพเดทในวันนี้</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- เพิ่ม CSS สำหรับไทม์ไลน์ -->
+<style>
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 1.5rem;
+    border-left: 2px solid #e9ecef;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -0.4rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 50%;
+}
+
+.job-item {
+    transition: all 0.3s ease;
+}
+
+.job-item:hover {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+}
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

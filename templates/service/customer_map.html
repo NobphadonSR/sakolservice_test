@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - แผนที่ตำแหน่งลูกค้า{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .search-container {
+        margin-bottom: 20px;
+    }
+    .search-box {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    .customer-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        display: none;
+        background: white;
+        position: absolute;
+        width: 100%;
+        z-index: 1000;
+    }
+    .customer-item {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    .customer-item:hover {
+        background-color: #f8f9fa;
+    }
+    .customer-info {
+        padding: 10px;
+    }
+    .customer-info h5 {
+        margin-bottom: 8px;
+        color: #084298;
+        font-family: 'Kanit', sans-serif;
+    }
+    .customer-info p {
+        margin-bottom: 5px;
+        font-family: 'Kanit', sans-serif;
+    }
+    .leaflet-container a {
+        color: #ffffff;
+        font-family: 'Kanit', sans-serif;
+    }
+    .leaflet-container .leaflet-control-attribution {
+        background: #86b6fe8f;
+        margin: 0;
+    }
+    .location-link {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 5px 10px;
+        background-color: #084298;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .location-link:hover {
+        background-color: #063175;
+        color: white;
+    }
+    .leaflet-control-zoom-in span, .leaflet-control-zoom-out span {
+        color: #242424;
+    }
+    .leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        background-clip: padding-box;
+        position: relative;
+        top: 515px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">แผนที่ตำแหน่งลูกค้า</h3>
+                    
+                    <!-- เพิ่มส่วนค้นหา -->
+                    <div class="search-container position-relative mb-4">
+                        <input type="text" 
+                               id="searchCustomer" 
+                               class="search-box" 
+                               placeholder="ค้นหาชื่อลูกค้า หรือ ชื่อโครงการ..."
+                               autocomplete="off">
+                        <div id="customerList" class="customer-list"></div>
+                    </div>
+
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // สร้างแผนที่ตั้งต้นที่ประเทศไทย
+    const map = L.map('map').setView([13.7563, 100.5018], 6);
+    const markers = {{ markers|safe }};
+    const markerObjects = {};  // เก็บ marker objects
+
+    // เพิ่ม tile layer จาก OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data © OpenStreetMap contributors'
+    }).addTo(map);
+
+    // เพิ่ม markers
+    markers.forEach(function(marker) {
+        const customerMarker = L.marker([marker.lat, marker.lng]).addTo(map);
+        
+        // สร้าง popup content
+        const popupContent = `
+            <div class="customer-info">
+                <h5>${marker.name}</h5>
+                <p><strong>โครงการ:</strong> ${marker.project}</p>
+                <p><strong>บ้านเลขที่:</strong> ${marker.house_number}</p>
+                <p><strong>ที่อยู่:</strong> ${marker.location}</p>
+                <p><strong>เบอร์โทร:</strong> ${marker.phone}</p>
+                <a href="https://www.google.com/maps?q=${marker.lat},${marker.lng}" 
+                target="_blank" 
+                class="location-link">
+                    <i class="fab fa-google me-1"></i> ดูใน Google Maps
+                </a>
+            </div>
+        `;
+        
+        customerMarker.bindPopup(popupContent);
+        
+        // เก็บ marker object ไว้ใช้ในการค้นหา
+        markerObjects[marker.name] = {
+            marker: customerMarker,
+            data: marker
+        };
+    });
+
+    // ฟังก์ชันค้นหา
+    const searchInput = document.getElementById('searchCustomer');
+    const customerList = document.getElementById('customerList');
+
+    searchInput.addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase();
+    customerList.innerHTML = '';
+    
+    if (searchText.length < 2) {
+        customerList.style.display = 'none';
+        return;
+    }
+
+    const matches = markers.filter(customer => 
+        customer.name.toLowerCase().includes(searchText) ||
+        customer.project.toLowerCase().includes(searchText)
+    );
+
+    if (matches.length > 0) {
+        customerList.style.display = 'block';
+        matches.forEach(customer => {
+            const div = document.createElement('div');
+            div.className = 'customer-item';
+            div.innerHTML = `
+                <strong>${customer.name}</strong><br>
+                <small>${customer.project}</small>
+            `;
+            
+            div.addEventListener('click', () => {
+                selectCustomer(customer);  // แยก logic ไปเป็นฟังก์ชันใหม่
+            });
+            
+            customerList.appendChild(div);
+        });
+    } else {
+        customerList.style.display = 'none';
+    }
+});
+
+    // ป้องกันการ submit form โดยไม่ตั้งใจ
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // ป้องกันการ submit form
+            const firstMatch = markers.find(customer => 
+                customer.name.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                customer.project.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+            
+            if (firstMatch) {
+                selectCustomer(firstMatch);
+            }
+        }
+    });
+
+    // ฟังก์ชันใหม่สำหรับการเลือกลูกค้า
+    function selectCustomer(customer) {
+        map.setView([customer.lat, customer.lng], 15);
+        markerObjects[customer.name].marker.openPopup();
+        customerList.style.display = 'none';
+        searchInput.value = customer.name;
+    }
+
+    // ปิดผลการค้นหาเมื่อคลิกนอกพื้นที่
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !customerList.contains(e.target)) {
+            customerList.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

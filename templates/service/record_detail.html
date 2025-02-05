@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block title %}รายละเอียดการบริการ - {{ record.job_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    .timeline-item {
+        padding: 10px 0;
+        border-left: 2px solid #dee2e6;
+        margin-left: 20px;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 15px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid #084298;
+    }
+    .service-stats {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    .warranty-info {
+        border-left: 4px solid;
+        padding: 10px 15px;
+        margin: 10px 0;
+    }
+    .warranty-active {
+        border-color: #28a745;
+        background: #f0f9f0;
+    }
+    .warranty-expired {
+        border-color: #dc3545;
+        background: #fdf0f0;
+    }
+    /* เพิ่ม CSS ในส่วน extra_css */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn i {
+        font-size: 14px;
+    }
+
+    .changes-detail {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-top: 8px;
+    }
+
+    .changes-detail ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .changes-detail li {
+        margin-bottom: 4px;
+    }
+
+    .timeline-item .badge {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+
+    /* ปรับแต่งการแสดงผลบนมือถือ */
+    @media (max-width: 768px) {
+        .card-header {
+            padding: 15px;
+        }
+
+        .card-header .d-flex {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-header h4 {
+            text-align: center;
+            font-size: 1.1rem;
+            width: 100%;
+        }
+
+        .card-header div:last-child {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .card-header .btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* ปรับขนาดไอคอน */
+        .card-header .btn i {
+            font-size: 14px;
+        }
+        .changes-detail {
+            font-size: 0.9rem;
+        }
+        
+        .timeline-item {
+            padding-left: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- ข้อมูลหลัก -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clipboard-list"></i> 
+                        รายละเอียดการบริการ - {{ record.job_number }}
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'service:record_edit' record.id %}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i>
+                            <span>แก้ไข</span>
+                        </a>
+                        <a href="{% url 'service:record_delete' record.id %}" 
+                           class="btn btn-danger"
+                           onclick="return confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')">
+                            <i class="fas fa-trash"></i>
+                            <span>ลบ</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- สถานะและการรับประกัน -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="status-badge {% if record.completion_status %}bg-success text-white{% else %}bg-warning{% endif %}">
+                                <i class="fas {% if record.completion_status %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                {{ record.completion_status|yesno:"จบงาน,รอดำเนินการ" }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="warranty-info {% if warranty_status == 'ในประกัน' %}warranty-active{% else %}warranty-expired{% endif %}">
+                                <h6 class="mb-1">สถานะการรับประกัน</h6>
+                                <p class="mb-0">
+                                    {{ warranty_status }}
+                                    {% if days_remaining > 0 %}
+                                        (เหลือ {{ days_remaining }} วัน)
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ข้อมูลลูกค้าและโครงการ -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>ข้อมูลลูกค้า</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>ชื่อลูกค้า:</th>
+                                    <td>{{ record.customer_name}}</td>
+                                </tr>
+                                <tr>
+                                    <th>เบอร์โทร:</th>
+                                    <td>{{ record.customer_phone|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>บ้านเลขที่:</th>
+                                    <td>{{ record.house_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>แปลง:</th>
+                                    <td>{{ record.plot_number|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>ข้อมูลโครงการ</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>โครงการ:</th>
+                                    <td>{{ record.project_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>รหัสโครงการ:</th>
+                                    <td>{{ record.project_code|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>แบบบ้าน:</th>
+                                    <td>{{ record.house_type|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>สถานะการโอน:</th>
+                                    <td>{{ record.transfer_status|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- รายละเอียดการบริการ -->
+                    <h5 class="mt-4">รายละเอียดการบริการ</h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th style="width: 200px;">อาการที่แจ้ง:</th>
+                                    <td>{{ record.description }}</td>
+                                </tr>
+                                <tr>
+                                    <th>วัสดุ/อุปกรณ์ที่ผิดปกติ:</th>
+                                    <td>{{ record.equipment_status|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>สาเหตุที่ตรวจพบ:</th>
+                                    <td>{{ record.cause_found|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>การแก้ไข:</th>
+                                    <td>{{ record.solution|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ข้อมูลเพิ่มเติมและสถิติ -->
+        <div class="col-md-4">
+            <!-- การนัดหมาย -->
+            {% if record.appointment_date %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> การนัดหมาย</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>วันที่นัด:</strong> {{ record.appointment_date|date:"d/m/Y" }}
+                    </p>
+                    <p class="mb-2">
+                        <strong>เวลา:</strong> {{ record.appointment_time|default:"-" }}
+                    </p>
+                    <p class="mb-0">
+                        <span class="badge {% if appointment_status == 'รอดำเนินการ' %}bg-info{% else %}bg-danger{% endif %}">
+                            {{ appointment_status }}
+                        </span>
+                        {% if days_to_appointment > 0 %}
+                            (อีก {{ days_to_appointment }} วัน)
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- สถิติการบริการ -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> สถิติการบริการ</h5>
+                </div>
+                <div class="card-body">
+                    <div class="service-stats">
+                        <p class="mb-2">
+                            <strong>บริการทั้งหมด:</strong> {{ stats.total_services }} ครั้ง
+                        </p>
+                        <p class="mb-2">
+                            <strong>จบงาน:</strong> {{ stats.completed_services }} ครั้ง
+                        </p>
+                        <p class="mb-0">
+                            <strong>รอดำเนินการ:</strong> {{ stats.pending_services }} ครั้ง
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ประวัติการบริการ -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> ประวัติการบริการล่าสุด</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for service in service_history %}
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ service.date|date:"d/m/Y" }}</strong>
+                                <span class="badge {% if service.completion_status %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ service.completion_status|yesno:"จบงาน,รอดำเนินการ" }}
+                                </span>
+                            </div>
+                            <p class="mb-0">{{ service.description|truncatechars:50 }}</p>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">ไม่มีประวัติการบริการ</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- เพิ่มหลังส่วน ประวัติการบริการ -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> ประวัติการแก้ไข
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for history in record.history.all %}
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ history.created_at|date:"d/m/Y H:i" }}</strong>
+                                <span class="badge {% if history.action == 'create' %}bg-success
+                                                {% elif history.action == 'update' %}bg-warning
+                                                {% else %}bg-danger{% endif %}">
+                                    {{ history.get_action_display }}
+                                </span>
+                            </div>
+                            <p class="mb-1">
+                                <small class="text-muted">
+                                    แก้ไขโดย: {{ history.modified_by.get_full_name|default:history.modified_by.username }}
+                                </small>
+                            </p>
+                            {% if history.modified_fields %}
+                                <div class="changes-detail">
+                                    <small>
+                                        <strong>การเปลี่ยนแปลง:</strong>
+                                        <ul class="mb-0">
+                                        {% for field, values in history.modified_fields.items %}
+                                            <li>
+                                                {{ field }}: 
+                                                <span class="text-danger">{{ values.old|default:"-" }}</span>
+                                                <i class="fas fa-arrow-right mx-1"></i>
+                                                <span class="text-success">{{ values.new|default:"-" }}</span>
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    </small>
+                                </div>
+                            {% endif %}
+                            {% if history.description %}
+                                <p class="mb-0"><small>{{ history.description }}</small></p>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">ไม่มีประวัติการแก้ไข</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

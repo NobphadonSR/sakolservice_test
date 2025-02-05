@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+<style>
+    .btn-primary {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+
+    .btn-info {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-info:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+
+    .btn-outline-primary {
+        color: #084298;
+        border-color: #084298;
+    }
+    .btn-outline-primary:hover {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-outline-primary.active {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">สถิติการแจ้งปัญหา</h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" data-period="day">วัน</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="week">สัปดาห์</button>
+                        <button type="button" class="btn btn-outline-primary active" data-period="month">เดือน</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="year">ปี</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="issuesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">งานที่รอดำเนินการ</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>เลขงาน</th>
+                                <th>ลูกค้า</th>
+                                <th>ประเภท</th>
+                                <th>สถานะ</th>
+                                <th>การดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in pending_records %}
+                            <tr>
+                                <td>{{ record.id }}</td>
+                                <td>{{ record.customer.user.username }}</td>
+                                <td>{{ record.get_request_type_display }}</td>
+                                <td>
+                                    <span class="badge {% if record.status == 'new' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ record.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'service:request_detail' record.id %}" 
+                                       class="btn btn-sm btn-primary">จัดการ</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">ไม่มีงานที่รอดำเนินการ</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">งานที่กำลังดำเนินการ</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>เลขงาน</th>
+                                <th>ช่าง</th>
+                                <th>สถานะ</th>
+                                <th>การดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in in_progress_records %}
+                            <tr>
+                                <td>{{ record.id }}</td>
+                                <td>{{ record.technician.username }}</td>
+                                <td>
+                                    <span class="badge {% if record.status == 'assigned' %}bg-info{% elif record.status == 'accepted' %}bg-warning{% elif record.status == 'traveling' %}bg-primary{% elif record.status == 'arrived' %}bg-secondary{% elif record.status == 'fixing' %}bg-warning{% endif %}">
+                                        {{ record.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'service:request_detail' record.id %}" 
+                                       class="btn btn-sm btn-info">ติดตาม</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">ไม่มีงานที่กำลังดำเนินการ</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('issuesChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ issues_labels|safe }},
+            datasets: [{
+                label: 'จำนวนการแจ้งปัญหา',
+                data: {{ issues_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // ลบ active class จากทุกปุ่มก่อน
+    document.querySelectorAll('[data-period]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // ตรวจสอบ URL parameter และเพิ่ม active class
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPeriod = urlParams.get('period') || 'month';
+    const activeButton = document.querySelector(`[data-period="${currentPeriod}"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+
+    // Period selector
+    document.querySelectorAll('[data-period]').forEach(button => {
+        button.addEventListener('click', function() {
+            // ลบ active class จากปุ่มทั้งหมด
+            document.querySelectorAll('[data-period]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // เพิ่ม active class ให้ปุ่มที่ถูกคลิก
+            this.classList.add('active');
+            
+            const period = this.dataset.period;
+            window.location.href = `?period=${period}`;
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}ยืนยันการลบข้อมูลลูกค้า{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">ยืนยันการลบข้อมูลลูกค้า</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <h5><i class="fas fa-exclamation-triangle"></i> คำเตือน</h5>
+            <p>การลบข้อมูลลูกค้าจะไม่สามารถกู้คืนได้ และจะลบข้อมูลที่เกี่ยวข้องทั้งหมด รวมถึง:</p>
+            <ul>
+                <li>ประวัติการแจ้งซ่อม</li>
+                <li>บันทึกการให้บริการ</li>
+                <li>บัญชีผู้ใช้งาน</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>ข้อมูลลูกค้า:</strong><br>
+            ชื่อลูกค้า: {{ object.customer_name }}<br>
+            โครงการ: {{ object.project_name }}<br>
+            เบอร์โทร: {{ object.phone }}<br>
+            ที่อยู่: {{ object.location }}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="text-end">
+                <a href="{% url 'accounts:customer_list' %}" class="btn btn-secondary">
+                    ยกเลิก
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> ยืนยันการลบ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

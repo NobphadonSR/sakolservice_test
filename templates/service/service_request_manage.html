@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - จัดการการแจ้งซ่อม{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge {
+        display: inline-block;
+        padding: .35em .65em;
+        font-size: .75em;
+        font-weight: 400;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: .25rem;
+    }
+    /* Modern Table Styling */
+    .table {
+        font-size: 0.9rem;
+        background: #fff;
+        margin-bottom: 0;
+        border-spacing: 0;
+        border-collapse: separate;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header Styling */
+    .table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        padding: 15px 12px;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap;
+        color: #495057;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    /* เพิ่มใน style block */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Row Styling */
+    .table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .table tbody td {
+        padding: 12px;
+        vertical-align: middle;
+    }
+
+    /* ปรับปรุง Hover Effects */
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+    }
+
+    /* ปรับขนาดตัวอักษรให้เล็กลงเพื่อให้แสดงข้อมูลได้มากขึ้น */
+    .table {
+        font-size: 0.85rem;
+    }
+
+    /* กำหนดความกว้างขั้นต่ำของคอลัมน์ */
+    .table th, .table td {
+        min-width: 100px;
+        white-space: nowrap;
+    }
+
+    /* ยกเว้นคอลัมน์ที่ต้องการให้ข้อความขึ้นบรรทัดใหม่ */
+    .table td.description {
+        white-space: normal;
+        min-width: 200px;
+    }
+    /* ปรับปรุง Badge Colors */
+    .bg-warning { background-color: #ffc107 !important; }
+    .bg-info { background-color: #0dcaf0 !important; }
+    .bg-primary { background-color: #0d6efd !important; }
+    .bg-purple { background-color: #6f42c1 !important; }
+    .bg-orange { background-color: #fd7e14 !important; }
+    .bg-success { background-color: #198754 !important; }
+    .bg-danger { background-color: #dc3545 !important; }
+    .bg-secondary { background-color: #6c757d !important; }
+
+    .bg-purple {
+        background-color: #6f42c1;
+    }
+    .bg-orange {
+        background-color: #fd7e14;
+    }
+    .btn-primary {
+        background-color: #084298;
+        color: #ffffff;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        background-color: #ffffff;
+        color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary-update {
+        color: #fff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary-update:hover {
+        background-color: #ffffff;
+        border-color: #084298;
+        color: #084298;
+    }
+    .modal-backdrop {
+        opacity: 0.5;
+    }
+    
+    .modal {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    /* เพิ่ม hover effect สำหรับแถวในตาราง */
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        transition: background-color 0.2s ease;
+    }
+
+    /* ปรับแต่งปุ่มดูรายละเอียด */
+    .btn-outline-primary {
+        color: #084298;
+        border-color: #084298;
+    }
+    .btn-outline-primary:hover {
+        color: #fff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    /* ปรับปรุง Action Buttons */
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.785rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        margin: 2px;
+    }
+
+    .btn-primary-update {
+        background: linear-gradient(45deg, #084298, #0d6efd);
+        border: none;
+    }
+
+    .btn-info {
+        background: linear-gradient(45deg, #0dcaf0, #31d2f2);
+        border: none;
+        color: white;
+    }
+
+    /* Responsive Table */
+    @media (max-width: 992px) {
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            box-shadow: none;
+        }
+
+        .table td, .table th {
+            min-width: 120px;
+        }
+
+        .table td:first-child {
+            position: sticky;
+            left: 0;
+            background: #fff;
+            z-index: 1;
+        }
+    }
+
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+        background: linear-gradient(45deg, #f8f9fa, #fff);
+        border-bottom: 1px solid #eee;
+        padding: 1rem 1.5rem;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    /* Alert Styling */
+    .alert {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        background: linear-gradient(45deg, #f8f9fa, #fff);
+        border-bottom: 1px solid #eee;
+        padding: 1.2rem 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #eee;
+        padding: 1.2rem 1.5rem;
+    }
+
+    /* Form Controls */
+    .form-control, .form-select {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.8rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">จัดการการแจ้งซ่อม</h5>
+    </div>
+    <div class="card-body">
+        <a href="{% url 'service:export_service_requests' %}" class="btn btn-primary mb-3">ส่งออก Excel</a>
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>เลขที่คำขอ</th>
+                        <th>วันที่แจ้ง</th>
+                        <th>วันที่นัดหมาย</th>
+                        <th>เวลานัดหมาย</th>
+                        <th>ลูกค้า</th>
+                        <th>ประเภท</th>
+                        <th>รายละเอียด</th>
+                        <th>ช่าง</th>
+                        <th>สถานะ</th>
+                        <th>สถานะประกัน</th>
+                        <th>โครงการ</th>
+                        <th>บ้านเลขที่</th>
+                        <th>เบอร์โทร</th>
+                        <th>ค่าใช้จ่าย</th>
+                        <th>การจัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in service_requests %}
+                    <tr>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'"">{{ request.id }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">{{ request.created_at|date:"d/m/Y H:i" }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">{{ request.appointment_date|date:"d/m/Y" }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">{{ request.appointment_time|time:"H:i" }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {{ request.customer.name|default:"-" }}
+                        </td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">{{ request.get_request_type_display }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">{{ request.description|truncatechars:50 }}</td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {% if request.technician %}
+                                {{ request.technician.username|default:request.technician.id }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {% if request.status == 'assigned' %}
+                                <span class="badge bg-warning">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'accepted' %}
+                                <span class="badge bg-info">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'traveling' %}
+                                <span class="badge bg-primary">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'arrived' %}
+                                <span class="badge bg-purple">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'fixing' %}
+                                <span class="badge bg-orange">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'completed' %}
+                                <span class="badge bg-success">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'cancelled' %}
+                                <span class="badge bg-danger">{{ request.get_status_display }}</span>
+                            {% elif request.status == 'rescheduled' %}
+                                <span class="badge bg-secondary">{{ request.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ request.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <!-- เพิ่มในตารางหรือการ์ดแสดงรายการ -->
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {% if request.warranty_status == 'in_warranty' %}
+                                <span class="badge bg-success">อยู่ในประกัน</span>
+                            {% elif request.warranty_status == 'out_of_warranty' %}
+                                <span class="badge bg-danger">ไม่อยู่ในประกัน</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <!-- โครงการ -->    
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {{ request.customer.project_name|default:"-" }}
+                        </td>
+                        <!-- บ้านเลขที่ -->
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {{ request.customer.house_number|default:"-" }}
+                        </td>
+                        <!-- เบอร์โทร -->
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {{ request.customer.phone|default:"-" }}
+                        </td>
+                        <!-- ค่าใช้จ่าย -->
+                        <td onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                            {% if request.estimated_cost %}
+                                {{ request.estimated_cost|floatformat:2 }} บาท
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <!-- แก้ไขส่วนของ <td> ที่แสดงการจัดการ (ในส่วนของ table row) -->
+                        <td>
+                            <a href="{% url 'service:update_status' request.pk %}" 
+                            class="btn btn-sm btn-primary-update">
+                                อัพเดทสถานะ
+                            </a>
+                            
+                            <!-- เพิ่มปุ่มจัดการประกัน -->
+                            <button type="button" 
+                                    class="btn btn-sm btn-info" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#warrantyModal{{ request.pk }}">
+                                จัดการประกัน
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">ไม่พบข้อมูลการแจ้งซ่อม</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ย้าย Modals ออกมานอก table -->
+{% for request in service_requests %}
+<div class="modal fade" id="warrantyModal{{ request.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">จัดการประกัน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">สถานะประกันปัจจุบัน:</label>
+                    <div>
+                        {% if request.warranty_status == 'in_warranty' %}
+                            <span class="badge bg-success">อยู่ในประกัน</span>
+                            <small class="d-block text-muted">
+                                ถึงวันที่: {{ request.warranty_end_date|date:"d/m/Y" }}
+                            </small>
+                        {% else %}
+                            <span class="badge bg-danger">ไม่อยู่ในประกัน</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">ดำเนินการ:</label>
+                    <select class="form-select" id="warrantyAction{{ request.id }}">
+                        <option value="set_warranty">ตั้งค่าประกันใหม่</option>
+                        <option value="cancel_warranty">ยกเลิกประกัน</option>
+                    </select>
+                </div>
+
+                <div id="warrantyDateInput{{ request.id }}" class="mb-3">
+                    <label class="form-label">วันที่เริ่มประกัน:</label>
+                    <input type="date" class="form-control" id="warrantyDate{{ request.id }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                <button type="button" class="btn btn-primary" onclick="setWarranty({{ request.id }})">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // จัดการ Modal events
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.addEventListener('show.bs.modal', function (event) {
+            // ทำความสะอาด form เมื่อเปิด modal
+            const form = this.querySelector('form');
+            if (form) form.reset();
+        });
+    });
+});
+
+function setWarranty(requestId) {
+    const form = document.getElementById(`warrantyForm${requestId}`);
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    const formData = new FormData(form);
+    formData.append('action', 'set_warranty');
+    
+    // แสดง loading state
+    const submitBtn = event.target;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'กำลังดำเนินการ...';
+
+    fetch(`/service/request/${requestId}/warranty/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // ซ่อน modal ก่อน show alert
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`warrantyModal${requestId}`));
+            modal.hide();
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('เกิดข้อผิดพลาด: ' + error);
+    })
+    .finally(() => {
+        // คืนค่า button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+function removeWarranty(requestId) {
+    if (!confirm('ต้องการยกเลิกประกันใช่หรือไม่?')) return;
+    
+    const formData = new FormData();
+    formData.append('action', 'remove_warranty');
+    
+    // แสดง loading state
+    const submitBtn = event.target;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'กำลังดำเนินการ...';
+
+    fetch(`/service/request/${requestId}/warranty/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // ซ่อน modal ก่อน show alert
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`warrantyModal${requestId}`));
+            modal.hide();
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        alert('เกิดข้อผิดพลาด: ' + error);
+    })
+    .finally(() => {
+        // คืนค่า button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

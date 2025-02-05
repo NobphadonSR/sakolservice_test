@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}แก้ไขข้อมูลส่วนตัว{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .btn-primary {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    #map-container {
+        width: 100%;
+        height: 300px;
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .profile-image-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 50%;
+        border: 3px solid #084298;
+        position: relative;
+    }
+    
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-image-preview {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 50%;
+        border: 3px solid #084298;
+    }
+    
+    #profileImageInput {
+        max-width: 200px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">แก้ไขข้อมูลส่วนตัว</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'accounts:edit_profile' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {# ส่วนข้อมูลพื้นฐานสำหรับทุกประเภทผู้ใช้ #}
+                        <div class="mb-3">
+                            <label class="form-label">รูปโปรไฟล์</label>
+                            <div class="profile-image-preview mb-3">
+                                {% if user.profile_image %}
+                                    <img src="{{ user.profile_image.url }}" class="rounded-circle profile-image" alt="Current Profile">
+                                {% else %}
+                                    <img src="{% static 'img/default-profile.png' %}" class="rounded-circle profile-image" alt="Default Profile">
+                                {% endif %}
+                            </div>
+                            <input type="file" name="profile_image" id="profileImageInput" class="form-control" accept="image/*">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">เบอร์โทรศัพท์</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone }}" required>
+                        </div>
+
+                        {% if user.user_type == 'customer' %}
+                            <div class="mb-3">
+                                <label for="project_name" class="form-label">ชื่อโครงการ</label>
+                                <input type="text" class="form-control" id="project_name" name="project_name" 
+                                       value="{{ user.customer.project_name }}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="house_number" class="form-label">บ้านเลขที่</label>
+                                <input type="text" class="form-control" id="house_number" name="house_number" 
+                                       value="{{ user.customer.house_number }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="location" class="form-label">ที่อยู่</label>
+                                <textarea class="form-control" id="location" name="location" 
+                                          rows="3" required>{{ user.customer.location }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">ที่อยู่ปัจจุบัน:</label>
+                                <p>{{ user.customer.location|default:"ยังไม่ได้ระบุที่อยู่" }}</p>
+                                <div id="map-container"></div>
+                                <a href="{% url 'accounts:customer_map' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-map-marker-alt"></i> เลือกที่อยู่บนแผนที่
+                                </a>
+                            </div>                           
+
+                        {% elif user.user_type == 'technician' %}
+                            <div class="mb-3">
+                                <label for="username" class="form-label">ชื่อช่าง</label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ user.username }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="address" class="form-label">ที่อยู่</label>
+                                <textarea class="form-control" id="address" name="address" 
+                                          rows="3" required>{{ user.address }}</textarea>
+                            </div>
+                        {% endif %}
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    function initMap() {
+        // ตำแหน่งเริ่มต้น (กรุงเทพฯ)
+        const defaultLocation = {
+            lat: 13.7563,
+            lng: 100.5018
+        };
+
+        // สร้างแผนที่
+        const map = L.map('map-container').setView([defaultLocation.lat, defaultLocation.lng], 15);
+        
+        // เพิ่ม tile layer จาก OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © OpenStreetMap contributors'
+        }).addTo(map);
+
+        {% if user.customer.latitude and user.customer.longitude %}
+        // เพิ่มมาร์กเกอร์ที่ตำแหน่งของลูกค้า
+        const customerLocation = {
+            lat: {{ user.customer.latitude }},
+            lng: {{ user.customer.longitude }}
+        };
+        
+        L.marker([customerLocation.lat, customerLocation.lng])
+            .addTo(map)
+            .bindPopup("ที่อยู่ปัจจุบัน");
+        
+        map.setView([customerLocation.lat, customerLocation.lng], 15);
+        {% endif %}
+    }
+
+    window.onload = initMap;
+
+    document.getElementById('profileImageInput').addEventListener('change', function(e) {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            document.querySelector('.profile-image').src = e.target.result;
+        }
+        
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - รายการแจ้งซ่อม{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Table Styling */
+    .table {
+        font-size: 0.9rem;
+        background: #fff;
+        margin-bottom: 0;
+        border-spacing: 0;
+        border-collapse: separate;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Header Styling */
+    .table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        padding: 15px 12px;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap;
+        color: #495057;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    /* Row Styling */
+    .table tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+    }
+
+    /* Badge Styling */
+    .badge {
+        display: inline-block;
+        padding: .35em .65em;
+        font-size: .75em;
+        font-weight: 400;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: .25rem;
+    }
+
+    /* Badge Colors */
+    .bg-warning { background-color: #ffc107 !important; }
+    .bg-info { background-color: #0dcaf0 !important; }
+    .bg-primary { background-color: #0d6efd !important; }
+    .bg-purple { background-color: #6f42c1 !important; }
+    .bg-orange { background-color: #fd7e14 !important; }
+    .bg-success { background-color: #198754 !important; }
+    .bg-danger { background-color: #dc3545 !important; }
+
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+        background: linear-gradient(45deg, #f8f9fa, #fff);
+        border-bottom: 1px solid #eee;
+        padding: 1rem 1.5rem;
+    }
+
+    /* Button Styling */
+    .btn-primary {
+        background: linear-gradient(45deg, #084298, #0d6efd);
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    }
+
+    /* Responsive Table */
+    @media (max-width: 992px) {
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table td, .table th {
+            min-width: 120px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">รายการแจ้งซ่อม</h5>
+        <a href="{% url 'service:create_request' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> แจ้งปัญหาใหม่
+        </a>
+    </div>
+    {% if imported_records %}
+    <div class="alert alert-info m-3">
+        <i class="fas fa-info-circle"></i> มีประวัติการแจ้งซ่อมที่นำเข้าจากระบบเก่า
+    </div>
+    {% endif %}
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>เลขที่คำขอ</th>
+                        <th>ชื่อลูกค้า</th>
+                        <th>โครงการ</th>
+                        <th>บ้านเลขที่</th>
+                        <th>วันที่แจ้ง</th>
+                        <th>วันที่นัดหมาย</th>
+                        <th>เวลานัดหมาย</th>
+                        <th>ประเภทงาน</th>
+                        <th>รายละเอียด</th>
+                        <th>ช่างผู้รับผิดชอบ</th>
+                        <th>สถานะ</th>
+                        <th>สถานะประกัน</th>
+                        <th>ค่าใช้จ่าย</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    <tr onclick="window.location.href='{% url 'service:request_detail' request.pk %}'">
+                        <td>{{ request.id }}</td>
+                        <td>{{ request.customer.user.username }}</td>
+                        <td>{{ request.customer.project_name }}</td>
+                        <td>{{ request.customer.house_number }}</td>
+                        <td>{{ request.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>{{ request.appointment_date|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{{ request.appointment_time|time:"H:i"|default:"-" }}</td>
+                        <td>{{ request.get_request_type_display }}</td>
+                        <td>
+                            {% if request.description %}
+                                {{ request.description|truncatechars:50 }}
+                            {% elif request.customer.problem_description %}
+                                {{ request.customer.problem_description|truncatechars:50 }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ request.technician.customer.customer_name|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if request.status == 'pending' %}bg-warning
+                                            {% elif request.status == 'confirmed' %}bg-info
+                                            {% elif request.status == 'assigned' %}bg-primary
+                                            {% elif request.status == 'accepted' %}bg-info
+                                            {% elif request.status == 'traveling' %}bg-primary
+                                            {% elif request.status == 'arrived' %}bg-purple
+                                            {% elif request.status == 'fixing' %}bg-orange
+                                            {% elif request.status == 'completed' %}bg-success
+                                            {% elif request.status == 'cancelled' %}bg-danger
+                                            {% elif request.status == 'rescheduled' %}bg-warning
+                                            {% endif %}">
+                                {{ request.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if request.warranty_status == 'in_warranty' %}
+                                <span class="badge bg-success">อยู่ในประกัน</span>
+                            {% elif request.warranty_status == 'out_of_warranty' %}
+                                <span class="badge bg-danger">ไม่อยู่ในประกัน</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.estimated_cost %}
+                                {{ request.estimated_cost|floatformat:2 }} บาท
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center">ไม่พบรายการแจ้งซ่อม</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

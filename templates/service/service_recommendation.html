@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - ให้คำแนะนำการซ่อม{% endblock %}
+
+{% block content %}
+<!-- ตรวจสอบสิทธิ์ก่อนแสดงเนื้อหา -->
+{% if user.user_type == 'technician' or user.user_type == 'service' %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            {% if user.user_type == 'service' %}
+                ให้คำปรึกษา (ฝ่ายบริการ)
+            {% else %}
+                ให้คำปรึกษา (ช่างเทคนิค)
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- ข้อมูลลูกค้าและรายละเอียดการแจ้ง -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>ข้อมูลลูกค้า</h6>
+                <p><strong>ชื่อลูกค้า:</strong> {{ customer.user.username }}</p>
+                <p><strong>โครงการ:</strong> {{ customer.project_name }}</p>
+                <p><strong>ที่อยู่:</strong> {{ customer.location }}</p>
+                <p><strong>สถานะประกัน:</strong> 
+                    {% if service_request.warranty_status == 'in_warranty' %}
+                        <span class="badge bg-success">อยู่ในประกัน</span>
+                    {% else %}
+                        <span class="badge bg-danger">ไม่อยู่ในประกัน</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h6>รายละเอียดการแจ้ง</h6>
+                <p><strong>อาการที่แจ้ง:</strong> {{ service_request.description }}</p>
+                <p><strong>วันที่แจ้ง:</strong> {{ service_request.created_at|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+
+        {% if user.user_type == 'service' and service_request.technician %}
+        <div class="alert alert-info mb-3">
+            <strong>ช่างที่รับผิดชอบ:</strong> {{ service_request.technician.username }}
+        </div>
+        {% endif %}
+
+        <!-- ฟอร์มให้คำแนะนำ -->
+        <form method="post" id="recommendationForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label" for="service_type">ประเภทงาน</label>
+                <select name="service_type" id="service_type" class="form-select" required title="เลือกประเภทงาน">
+                    <option value="">เลือกประเภทงาน</option>
+                    <option value="normal">ระบบไฟปกติ</option>
+                    <option value="full_checkup">ระบบ Full Check Up</option>
+                    <option value="air_flow">ระบบ Air flow/Air Plus</option>
+                    <option value="checkup_air_plus">ระบบ Check up Program Air plus</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="appointment_date">วันที่นัดหมาย</label>
+                <input type="date" name="appointment_date" id="appointment_date" 
+                       class="form-control" min="{{ today|date:'Y-m-d' }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label" for="appointment_time">เวลานัดหมาย</label>
+                <select name="appointment_time" id="appointment_time" class="form-select" required>
+                    <option value="">เลือกเวลานัดหมาย</option>
+                    <option value="10:00">10:00 น.</option>
+                    <option value="10:30">10:30 น.</option>
+                    <option value="14:00">14:00 น.</option>
+                    <option value="14:30">14:30 น.</option>
+                </select>
+                <div class="form-text">กรุณาเลือกเวลานัดหมายที่ว่าง</div>
+            </div>
+        
+            <div class="mb-3">
+                <label class="form-label" for="description">รายละเอียดการให้คำปรึกษา</label>
+                <textarea name="description" id="description" class="form-control" rows="4" required title="กรอกรายละเอียดการให้คำปรึกษา"></textarea>
+            </div>
+            
+            {% if user.user_type == 'service' %}
+            <div class="mb-3">
+                <label class="form-label" for="service_notes">หมายเหตุจากฝ่ายบริการ</label>
+                <textarea name="service_notes" id="service_notes" 
+                    class="form-control" rows="2"></textarea>
+            </div>
+            {% endif %}
+            <!-- เพิ่มส่วนแสดงราคาอัตโนมัติ -->
+            <div class="mb-3" id="autoCalculatedPrice">
+                <div class="alert alert-info">
+                    <h6>ราคาประมาณการอัตโนมัติ</h6>
+                    <p class="mb-0">ค่าบริการ: <span id="calculatedServiceFee">0</span> บาท</p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">ส่งคำปรึกษา</button>
+                <a href="{% url 'service:request_detail' service_request.id %}" class="btn btn-secondary">ย้อนกลับ</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- เพิ่ม JavaScript สำหรับส่งฟอร์ม -->
+{% block extra_js %}
+<script>
+document.getElementById('recommendationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    // เพิ่มการตรวจสอบวันและเวลานัดหมาย
+    const appointmentDate = formData.get('appointment_date');
+    const appointmentTime = formData.get('appointment_time');
+    
+    if (!appointmentDate || !appointmentTime) {
+        alert('กรุณาเลือกวันและเวลานัดหมาย');
+        return;
+    }
+
+    // เพิ่มการตรวจสอบสำหรับฝ่ายบริการ
+    {% if user.user_type == 'service' %}
+    const serviceNotes = formData.get('service_notes');
+    if (serviceNotes) {
+        formData.append('is_from_service', 'true');
+    }
+    {% endif %}
+    
+    fetch("{% url 'service:submit_recommendation' service_request.id %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('ส่งคำแนะนำสำเร็จ');
+            window.location.href = "{% url 'service:request_detail' service_request.id %}";
+        } else {
+            alert(data.message || 'เกิดข้อผิดพลาดในการส่งคำแนะนำ');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาดในการส่งคำแนะนำ');
+    });
+});
+
+document.querySelector('select[name="service_type"]').addEventListener('change', function() {
+    const serviceType = this.value;
+    if (serviceType) {
+        fetch(`/service/calculate-fee/${service_request.id}/?service_type=${serviceType}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('calculatedServiceFee').textContent = data.fee;
+                    document.getElementById('autoCalculatedPrice').style.display = 'block';
+                } else {
+                    throw new Error(data.message || 'เกิดข้อผิดพลาดในการคำนวณราคา');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('ไม่สามารถคำนวณราคาได้: ' + error.message);
+                document.getElementById('autoCalculatedPrice').style.display = 'none';
+            });
+    } else {
+        document.getElementById('autoCalculatedPrice').style.display = 'none';
+    }
+});
+// เพิ่มฟังก์ชันตรวจสอบเวลาที่ว่าง
+document.getElementById('appointment_date').addEventListener('change', function() {
+    const date = this.value;
+    const timeSelect = document.getElementById('appointment_time');
+    
+    // เรียก API เพื่อตรวจสอบเวลาที่ว่าง
+    fetch(`/service/check-available-times/${service_request.id}/?date=${date}`)
+        .then(response => response.json())
+        .then(data => {
+            // ปิดการเลือกเวลาที่มีคนจองแล้ว
+            Array.from(timeSelect.options).forEach(option => {
+                if (option.value) {
+                    option.disabled = !data.available_times.includes(option.value);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+});
+</script>
+{% endblock %}
+
+{% else %}
+<div class="alert alert-danger">
+    ไม่มีสิทธิ์เข้าถึงหน้านี้
+</div>
+{% endif %}
+{% endblock %}

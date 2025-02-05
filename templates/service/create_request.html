@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - แจ้งซ่อมใหม่{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ปรับขนาดตัวอักษรให้ใหญ่ขึ้น */
+    body {
+        font-size: 16px;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.08);
+        border-radius: 12px;
+        margin-top: 20px;
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #084298;
+        padding: 20px;
+    }
+
+    .card-header h5 {
+        font-size: 24px;
+        color: #084298;
+        margin: 0;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    /* ปรับปรุงฟอร์มให้อ่านง่ายขึ้น */
+    .form-label {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .form-control {
+        font-size: 16px;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .form-control:focus {
+        border-color: #084298;
+        box-shadow: none;
+    }
+
+    /* ปรับปรุง select ให้ใช้งานง่ายขึ้น */
+    select.form-control {
+        height: auto;
+        padding-right: 40px;
+        background-size: 20px;
+        cursor: pointer;
+    }
+
+    /* ปรับปรุงปุ่มให้เห็นชัดเจน */
+    .btn {
+        font-size: 18px;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        margin: 5px;
+    }
+
+    .btn-primary {
+        background-color: #084298;
+        border: none;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+
+    /* เพิ่มไอคอนและสีให้สถานะ */
+    .status-badge {
+        font-size: 16px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* ข้อความช่วยเหลือ */
+    .help-text {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    /* ส่วนแสดงราคาและประกัน */
+    .info-box {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-box h6 {
+        font-size: 20px;
+        color: #084298;
+        margin-bottom: 15px;
+    }
+
+    .price-display {
+        font-size: 24px;
+        color: #084298;
+    }
+
+    /* ปรับปรุง checkbox ให้เห็นชัดเจน */
+    .form-check {
+        margin: 20px 0;
+    }
+
+    .form-check-input {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+    }
+
+    .form-check-label {
+        font-size: 18px;
+        padding-left: 5px;
+    }
+
+    /* แสดงข้อผิดพลาด */
+    .invalid-feedback {
+        font-size: 16px;
+        color: #dc3545;
+        margin-top: 8px;
+    }
+
+    /* ปรับความกว้างของฟอร์มให้เหมาะสม */
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* เพิ่มส่วนแสดงข้อมูลลูกค้า */
+    .customer-info {
+        background: #e9ecef;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .customer-info p {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-container">
+        <!-- แสดงข้อมูลลูกค้า -->
+        <!-- เพิ่มในส่วน customer-info -->
+        <div class="customer-info">
+            <h5>ข้อมูลของคุณ</h5>
+            <p><strong>ชื่อ:</strong> {{ customer_name }}</p>
+            <p><strong>โครงการ:</strong> {{ project_name }}</p>
+            <p><strong>บ้านเลขที่:</strong> {{ house_number }}</p>
+            <p><strong>เบอร์โทร:</strong> {{ phone|default:"-" }}</p>
+            <!-- เพิ่มส่วนแสดงสถานะประกัน -->
+            <p>
+                <strong>สถานะประกัน:</strong>
+                {% if customer.warranty_status == 'in_warranty' %}
+                    <span class="badge bg-success">อยู่ในประกัน</span>
+                {% elif customer.warranty_status == 'out_of_warranty' %}
+                    <span class="badge bg-danger">ไม่อยู่ในประกัน</span>
+                {% else %}
+                    <span class="badge bg-secondary">ไม่ระบุ</span>
+                {% endif %}
+            </p>
+            {% if customer.warranty_expiry_date %}
+                <p><strong>วันหมดประกัน:</strong> {{ customer.warranty_expiry_date|date:"d/m/Y" }}</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>แจ้งซ่อม</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="serviceRequestForm">
+                    {% csrf_token %}
+                    
+                    <!-- แสดงข้อความแจ้งเตือน -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- ประเภทงาน -->
+                    <div class="mb-4">
+                        <label class="form-label">ประเภทงาน</label>
+                        <select name="request_type" class="form-control" required>
+                            <option value="">กรุณาเลือกประเภทงาน</option>
+                            {% for value, label in form.fields.request_type.choices %}
+                                <option value="{{ value }}" {% if form.request_type.value == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.request_type.help_text %}
+                            <div class="help-text">{{ form.request_type.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- ประเภทบริการ -->
+                    <div class="mb-4">
+                        <label class="form-label">ประเภทบริการ</label>
+                        <select name="service_category" class="form-control" required>
+                            <option value="">กรุณาเลือกประเภทบริการ</option>
+                            {% for value, label in form.fields.service_category.choices %}
+                                <option value="{{ value }}" {% if form.service_category.value == value or value == customer.problem_type %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.service_category.help_text %}
+                            <div class="help-text">{{ form.service_category.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- รายละเอียดปัญหา -->
+                    <div class="mb-4">
+                        <label class="form-label">รายละเอียดปัญหา</label>
+                        <textarea name="description" 
+                                  class="form-control" 
+                                  rows="4"
+                                  required
+                                  placeholder="กรุณาระบุอาการหรือปัญหาที่พบ">{{ form.description.value|default:customer.problem_description }}</textarea>
+                        {% if form.description.help_text %}
+                            <div class="help-text">{{ form.description.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- วันและเวลานัดหมาย -->
+                    <div class="mb-4">
+                        <label class="form-label">วันที่นัดหมาย</label>
+                        <input type="date" 
+                               name="appointment_date" 
+                               class="form-control"
+                               required
+                               min="{{ today|date:'Y-m-d' }}"
+                               value="{{ form.appointment_date.value|date:'Y-m-d'|default:'' }}">
+                        {% if form.appointment_date.help_text %}
+                            <div class="help-text">{{ form.appointment_date.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">เวลานัดหมาย</label>
+                        <select name="appointment_time" class="form-control" required>
+                            <option value="">กรุณาเลือกเวลานัดหมาย</option>
+                            <optgroup label="ช่วงเช้า">
+                                <option value="10:00">10:00</option>
+                                <option value="10:30">10:30</option>
+                            </optgroup>
+                            <optgroup label="ช่วงบ่าย">
+                                <option value="14:00">14:00</option>
+                                <option value="14:30">14:30</option>
+                            </optgroup>
+                        </select>
+                        {% if form.appointment_time.help_text %}
+                            <div class="help-text">{{ form.appointment_time.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> ส่งข้อมูล
+                        </button>
+                        <a href="{% url 'service:request_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> ยกเลิก
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}โปรไฟล์ของฉัน{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    /* ปรับแต่ง Card */
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: none;
+        border-radius: 0.5rem;
+    }
+    
+    /* ปรับแต่งส่วนหัว Card */
+    .card-title {
+        color: #084298;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* ปรับแต่งส่วนข้อมูลที่อยู่ */
+    .address-info {
+        background: #f8f9fa;
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* ปรับแต่งส่วนแผนที่ */
+    .map-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 1px solid #dee2e6;
+    }
+    
+    #preview-map {
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    /* เพิ่ม style สำหรับ Custom Marker */
+    .custom-div-icon {
+        background: #084298;
+        border: 2px solid white;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 24px;
+        width: 25px !important;
+        height: 25px !important;
+        margin-left: -12px;
+        margin-top: -12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    }
+
+    /* เพิ่ม style สำหรับ Popup */
+    .map-popup-custom {
+        text-align: center;
+        font-size: 14px;
+        padding: 5px;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        padding: 5px;
+    }
+
+    .leaflet-popup-content {
+        margin: 8px;
+        text-align: center;
+    }
+
+    .profile-image-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 50%;
+        border: 3px solid #084298;
+        position: relative;
+    }
+    
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-image-preview {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 50%;
+        border: 3px solid #084298;
+    }
+    
+    #profileImageInput {
+        max-width: 200px;
+        margin: 0 auto;
+    }
+</style>
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- คอลัมน์ซ้าย: ข้อมูลส่วนตัว -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">ข้อมูลส่วนตัว</h5>
+                    <!-- เพิ่มส่วนรูปโปรไฟล์ -->
+                    <div class="text-center mb-4">
+                        <div class="profile-image-container mb-3">
+                            {% if user.profile_image %}
+                                <img src="{{ user.profile_image.url }}" class="rounded-circle profile-image" alt="Profile Image">
+                            {% else %}
+                                <img src="{% static 'img/default-profile.png' %}" class="rounded-circle profile-image" alt="Default Profile">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-text">
+                        <div class="mb-3">
+                            <strong>ชื่อผู้ใช้:</strong> 
+                            {% if user.user_type == 'customer' or user.user_type == 'technician' %}
+                                {{ user.customer.user.username }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <strong>ประเภทผู้ใช้:</strong> {{ user.get_user_type_display }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary mb-2">
+                            <i class="fa-solid fa-user-pen me-2"></i> แก้ไขข้อมูล
+                        </a>
+                        <a href="{% url 'password_change' %}" class="btn btn-primary">
+                            <i class="fa-solid fa-key me-2"></i> เปลี่ยนรหัสผ่าน
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- คอลัมน์ขวา: ข้อมูลที่อยู่และแผนที่ -->
+        {% if user.user_type == 'customer' %}
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">ข้อมูลที่อยู่</h5>
+                    <div class="address-info mb-3">
+                        <p class="mb-2">{{ user.customer.location|default:"ยังไม่ได้ระบุที่อยู่" }}</p>
+                        <p class="text-muted small">
+                            <i class="fas fa-history"></i> 
+                            จำนวนครั้งที่บันทึกที่อยู่: {{ user.customer.location_updates_count|default:"0" }} ครั้ง
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3 d-flex gap-2">
+                        <a href="{% url 'accounts:customer_map' %}" class="btn btn-primary">
+                            <i class="fas fa-map-marker-alt me-1"></i> แก้ไขที่อยู่บนแผนที่
+                        </a>
+                        {% if user.customer.latitude and user.customer.longitude %}
+                        <a href="https://www.google.com/maps?q={{ user.customer.latitude }},{{ user.customer.longitude }}" 
+                        target="_blank" 
+                        class="btn btn-primary">
+                            <i class="fab fa-google me-1"></i> ดูใน Google Maps
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    {% if user.customer.latitude and user.customer.longitude %}
+                    <div class="map-container">
+                        <div id="preview-map"></div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="col-md-{% if user.user_type == 'customer' %}12{% else %}8{% endif %}">
+            {% if user.user_type == 'customer' %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">การแจ้งซ่อมของฉัน</h5>
+                        {% if user.customer.service_requests.all %}
+                            <div class="list-group">
+                                {% for request in user.customer.service_requests.all %}
+                                    <a href="{% url 'service:request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ request.customer.user.username }}</h5>
+                                            <h6 class="mb-1">{{ request.get_request_type_display }}</h6>
+                                            <small>{{ request.created_at|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ request.description|truncatewords:30 }}</p>
+                                        <small class="text-muted">สถานะ: {{ request.get_status_display }}</small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">ยังไม่มีการแจ้งซ่อม</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if user.user_type == 'technician' %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">งานที่ได้รับมอบหมาย</h5>
+                        {% if user.assigned_requests.all %}
+                            <div class="list-group">
+                                {% for request in user.assigned_requests.all %}
+                                    <a href="{% url 'service:request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ request.customer.user.username }}</h5>
+                                            <h6 class="mb-1">{{ request.get_request_type_display }}</h6>
+                                            <small>{{ request.created_at|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ request.description|truncatewords:30 }}</p>
+                                        <small class="text-muted">สถานะ: {{ request.get_status_display }}</small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">ยังไม่มีงานที่ได้รับมอบหมาย</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if user.user_type == 'service' %}
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">การแจ้งซ่อมทั้งหมด</h5>
+                        {% if service_requests %}
+                            <div class="list-group">
+                                {% for request in service_requests %}
+                                    <a href="{% url 'service:request_detail' request.pk %}" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ request.customer.user.username }}</h5>
+                                            <h6 class="mb-1">{{ request.get_request_type_display }}</h6>
+                                            <small>{{ request.created_at|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <p class="mb-1">{{ request.description|truncatewords:30 }}</p>
+                                        <small class="text-muted">สถานะ: {{ request.get_status_display }}</small>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">ยังไม่มีการแจ้งซ่อม</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if user.user_type == 'customer' and user.customer.latitude and user.customer.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // สร้างแผนที่
+        const map = L.map('preview-map').setView([
+            {{ user.customer.latitude }}, 
+            {{ user.customer.longitude }}
+        ], 16);
+
+        // เพิ่ม tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © OpenStreetMap contributors'
+        }).addTo(map);
+
+        // เพิ่มหมุด
+        const marker = L.marker([
+            {{ user.customer.latitude }},
+            {{ user.customer.longitude }}
+        ]).addTo(map);
+
+        // ทำให้แน่ใจว่าแผนที่แสดงผลถูกต้อง
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+
+    } catch (e) {
+        console.error('Error initializing map:', e);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

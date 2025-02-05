@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Sakol Service - ยืนยันการลบบันทึก{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">ยืนยันการลบบันทึก</h5>
+    </div>
+    <div class="card-body">
+        <p>คุณต้องการลบบันทึกนี้ใช่หรือไม่?</p>
+        
+        <div class="alert alert-info">
+            <strong>รายละเอียดบันทึก:</strong><br>
+            วันที่: {{ object.date|date:"d/m/Y" }}<br>
+            รายละเอียด: {{ object.description }}<br>
+            {% if object.photos.exists %}
+            <small class="text-muted">* มีรูปภาพแนบ {{ object.photos.count }} รูป</small>
+            {% endif %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="text-end">
+                <a href="{% url 'service:service_records' %}" class="btn btn-secondary">
+                    ยกเลิก
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    ยืนยันการลบ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

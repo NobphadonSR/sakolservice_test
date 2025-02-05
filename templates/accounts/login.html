@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}เข้าสู่ระบบ{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-primary {
+        color: #fff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .forgot-password {
+        margin-top: 1rem;
+        text-align: right;
+    }
+    .forgot-password a {
+        color: #084298;
+        text-decoration: none;
+    }
+    .forgot-password a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">เข้าสู่ระบบ</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'accounts:login' %}">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+                </form>
+                <div class="forgot-password">
+                    <a href="{% url 'accounts:password_reset' %}">ลืมรหัสผ่าน?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

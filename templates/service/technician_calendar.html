@@ -1,0 +1,692 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sakol Service - ปฏิทินงาน{% endblock %}
+
+{% block extra_css %}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.css' rel='stylesheet' />
+    <style>
+    .fc-daygrid-day {
+        height: 120px !important;
+    }
+
+    .fc-daygrid-day-frame {
+        height: 100% !important;
+    }
+    a {
+        color: black;
+        text-decoration: solid;
+    }
+
+    .fc-day-today {
+        background-color: rgba(255, 220, 40, 0.15) !important;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        margin: 2px 0;
+        padding: 2px 4px;
+        font-size: 12px;
+    }
+
+    .calendar-controls {
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .calendar-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: nowrap;
+        flex-direction: column-reverse;
+    }
+
+    .download-btn {
+        background-color: #198754;
+        color: white;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 4px;
+        
+        cursor: pointer;
+    }
+
+    .download-btn:hover {
+        background-color: #ffffff;
+        color: #198754;
+        border: 1px solid #198754;
+    }
+
+    .btn-outline-primary {
+        color: #084298;
+        border-color: #084298;
+    }
+    .btn-outline-primary:hover {
+        color: #ffffff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+
+    .btn-primary {
+        color: #fff;
+        background-color: #084298;
+        border-color: #084298;
+    }
+    .btn-primary:hover {
+        color: #084298;
+        background-color: #ffffff;
+        border-color: #084298;
+    }
+    .btn-secondary {
+        color: #ffffff;
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-secondary:hover {
+        color: #6c757d;
+        background-color: #ffffff;
+        border-color: #6c757d;
+    }
+    /* สีสถานะงาน */
+    .status-assigned { background-color: #ffc107 !important; }
+    .status-accepted { background-color: #17a2b8 !important; }
+    .status-traveling { background-color: #007bff !important; }
+    .status-arrived { background-color: #6f42c1 !important; }
+    .status-fixing { background-color: #fd7e14 !important; }
+    .status-completed { background-color: #28a745 !important; }
+    .status-cancelled { background-color: #dc3545 !important; }
+    .status-rescheduled { background-color: #6c757d !important; }
+
+    /* เพิ่มสไตล์ใหม่ต่อจากของเดิม */
+    .fc-daygrid-event {
+        padding: 2px !important;
+        margin: 1px 0 !important;
+        min-height: auto !important;
+    }
+
+    .event-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.7rem !important;
+    }
+
+    .event-time {
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .event-title {
+        margin-bottom: 2px;
+    }
+
+    .event-description {
+        color: rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    .event-project, .event-technician, .event-phone, .event-time {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        line-height: 1.2;
+    }
+    .fc-daygrid-day {
+        min-height: 150px !important;
+    }
+
+    .fc-event:hover {
+        filter: brightness(90%);
+    }
+
+    .tooltip-inner {
+        max-width: 300px;
+        padding: 8px;
+        text-align: left;
+        white-space: pre-line;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+    }
+
+    #monthPicker {
+        max-width: 200px;
+    }
+    /* เพิ่มสไตล์ใหม่สำหรับ Responsive */
+    @media (max-width: 768px) {
+            .container-fluid {
+                padding: 0.5rem;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .col-md-9, .col-md-3 {
+                padding: 0;
+            }
+
+            .card {
+                margin-bottom: 1rem;
+                border-radius: 0;
+            }
+
+            .calendar-controls {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 0.5rem;
+            }
+
+            .calendar-buttons {
+                width: 100%;
+            }
+
+            .download-btn {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            .fc-header-toolbar {
+                margin-bottom: 0.5em !important;
+            }
+            
+            .fc .fc-button {
+                padding: 0.2rem 0.4rem !important;
+                font-size: 0.8rem !important;
+            }
+
+            .fc .fc-toolbar {
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+                padding: 0.5rem !important;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 1.1rem !important;
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            .fc .fc-toolbar.fc-header-toolbar {
+                margin-bottom: 0.5em;
+            }
+
+            .fc-daygrid-day {
+                min-height: 80px !important;
+                max-height: 120px !important;
+            }
+            .event-content {
+                font-size: 10px;
+            }
+
+            .event-time {
+                font-size: 10px;
+            }
+
+            .event-title {
+                font-size: 10px;
+            }
+
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+            
+            .modal-body {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+            .calendar-buttons {
+                flex-direction: column-reverse;
+            }
+            
+            .input-group {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            #monthPicker {
+                max-width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- เปลี่ยน class ให้รองรับ responsive -->
+        <div class="col-12 col-md-9 mb-3">
+            <div class="card">
+                <!-- แก้ไขส่วน calendar-controls ในส่วน card-header -->
+                <div class="card-header">
+                    <div class="calendar-controls">
+                        <h5 class="mb-0">ปฏิทินงาน</h5>
+                        <div class="calendar-buttons">
+                            <!-- เพิ่มส่วนนี้ -->
+                            <div class="input-group">
+                                <input type="month" id="monthPicker" class="form-control">
+                                <button id="goToDate" class="btn btn-primary">
+                                    <i class="fas fa-calendar"></i> ไปยังวันที่
+                                </button>
+                            </div>
+                            <!-- ส่วนเดิม -->
+                            <button id="downloadCalendar" class="download-btn">
+                                <i class="fas fa-download"></i> ดาวน์โหลดปฏิทิน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">งานวันนี้</h5>
+                </div>
+                <div class="card-body">
+                    <!-- เพิ่มลิงก์ไปยังหน้าสรุปงานวันนี้ -->
+                    <a href="{% url 'service:technician_daily_summary' %}?date={{ today|date:'Y-m-d' }}" 
+                    class="btn btn-outline-primary btn-sm mb-3">
+                        ดูสรุปงานวันนี้
+                    </a>
+                    <!-- แสดงรายการงานวันนี้ -->
+                    <div id="todayTasks">
+                        {% for task in today_tasks %}
+                        <div class="task-item mb-3 p-2 border rounded">
+                            <h6 class="mb-1">{{ task.customer.customer_name }}</h6>
+                            <p class="mb-1"><small>เวลา: {{ task.appointment_time|time:"H:i" }}</small></p>
+                            <p class="mb-1 text-muted small">{{ task.description|truncatechars:50 }}</p>
+                            <span class="badge bg-{{ task.status_color }}">{{ task.get_status_display }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">ไม่มีงานวันนี้</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- เพิ่มโค้ด Modal ตรงนี้ -->
+<div class="modal fade" id="taskDetailModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">รายละเอียดงาน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="taskDetails">
+                <!-- รายละเอียดงานจะถูกเพิ่มด้วย JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dayTasksModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">รายการงานในวัน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayTasksList">
+                <!-- รายการงานจะถูกเพิ่มด้วย JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar Core -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.js'></script>
+<!-- FullCalendar ภาษาไทย -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/th.js'></script>
+<!-- html2canvas สำหรับดาวน์โหลดปฏิทิน -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ฟังก์ชันสำหรับลบ modal backdrop
+    function removeModalBackdrop() {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    }
+
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'th',
+        initialView: 'dayGridMonth',
+        selectable: true,
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        height: 'auto',
+        firstDay: 0,
+        dayMaxEventRows: window.innerWidth < 768 ? 2 : 3,
+        dayMaxEvents: window.innerWidth < 768 ? 2 : 3,
+        eventDisplay: 'block',
+        
+        views: {
+            dayGridMonth: {
+                titleFormat: { year: 'numeric', month: 'short' }
+            }
+        },
+
+        // แก้ไขส่วน dateClick handler
+        dateClick: function(info) {
+            const clickedDate = info.date;
+            // เรียก API เพื่อดึงข้อมูลงานในวันที่เลือก
+            fetch(`/service/technician/get-events/?date=${clickedDate.toISOString().split('T')[0]}`)
+                .then(response => response.json())
+                .then(data => {
+                    showDayTasks(data, clickedDate);
+                })
+                .catch(error => console.error('Error:', error));
+        },
+
+        windowResize: function(view) {
+            if (window.innerWidth < 768) {
+                calendar.setOption('headerToolbar', {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                });
+                calendar.setOption('dayMaxEvents', 2);
+                calendar.setOption('dayMaxEventRows', 2);
+            } else {
+                calendar.setOption('headerToolbar', {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                });
+                calendar.setOption('dayMaxEvents', 3);
+                calendar.setOption('dayMaxEventRows', 3);
+            }
+        },
+
+        eventContent: function(arg) {
+            return {
+                html: `
+                    <div class="event-content">
+                        <div class="event-time">${arg.event.extendedProps.appointment_time || ''}</div>
+                        <div class="event-project">${arg.event.extendedProps.project_info || ''}</div>
+                        <div class="event-customer">${arg.event.extendedProps.customer || ''}</div>
+                        <div class="event-phone">${arg.event.extendedProps.phone || ''}</div>
+                        <!-- <div class="event-status badge bg-${arg.event.extendedProps.status || 'secondary'}">${arg.event.extendedProps.status_display || ''}</div> -->
+                    </div>
+                `
+            };
+        },
+
+        events: {
+            url: '/service/technician/get-events/',
+            method: 'GET',
+            failure: function(error) {
+                console.error('เกิดข้อผิดพลาดในการดึงข้อมูลงาน:', error);
+            },
+            success: function(events) {
+                console.log('ข้อมูลงานถูกโหลด:', events);
+            }
+        },
+
+        eventClick: function(info) {
+            removeModalBackdrop(); // ลบ backdrop เก่าก่อน
+            showTaskDetails(info.event);
+        },
+
+        eventDidMount: function(info) {
+            info.el.classList.add('status-' + info.event.extendedProps.status);
+            
+            new bootstrap.Tooltip(info.el, {
+                title: `
+                        ${info.event.extendedProps.customer}
+                        โครงการ: ${info.event.extendedProps.project_info}
+                        เบอร์โทร: ${info.event.extendedProps.phone}
+                        ช่าง: ${info.event.extendedProps.technician_info}
+                        เวลา: ${info.event.start ? new Date(info.event.start).toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : '-'}
+                        สถานะ: ${info.event.extendedProps.status_display}
+                        สถานะประกัน: ${info.event.extendedProps.warranty_status === 'in_warranty' ? 'อยู่ในประกัน' : info.event.extendedProps.warranty_status === 'out_of_warranty' ? 'ไม่อยู่ในประกัน' : '-'}
+                    `,
+                html: true,
+                placement: 'top'
+            });
+        }
+    });
+
+    calendar.render();
+
+    const monthPicker = document.getElementById('monthPicker');
+    const goToDateBtn = document.getElementById('goToDate');
+
+    // ตั้งค่าค่าเริ่มต้นเป็นเดือนปัจจุบัน
+    const now = new Date();
+    monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // เพิ่ม event listener สำหรับปุ่มไปยังวันที่
+    goToDateBtn.addEventListener('click', function() {
+        const selectedDate = monthPicker.value;
+        if (selectedDate) {
+            const [year, month] = selectedDate.split('-');
+            calendar.gotoDate(`${year}-${month}-01`);
+            
+            // เรียก API เพื่อดึงข้อมูลงานของเดือนที่เลือก
+            fetch(`/service/technician/get-events/?year=${year}&month=${month}`)
+                .then(response => response.json())
+                .then(data => {
+                    calendar.removeAllEvents();
+                    calendar.addEventSource(data);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+
+    // เพิ่ม event listener สำหรับการเปลี่ยนแปลงมุมมอง
+    calendar.on('datesSet', function(info) {
+        const view = calendar.view;
+        const start = view.activeStart;
+        const end = view.activeEnd;
+
+        // อัพเดท monthPicker ให้ตรงกับมุมมองปัจจุบัน
+        monthPicker.value = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
+
+        // เรียก API เพื่อดึงข้อมูลงานตามช่วงวันที่
+        fetch(`/service/technician/get-events/?start=${start.toISOString()}&end=${end.toISOString()}`)
+            .then(response => response.json())
+            .then(data => {
+                calendar.removeAllEvents();
+                calendar.addEventSource(data);
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+
+    // ฟังก์ชันดาวน์โหลดปฏิทิน
+    document.getElementById('downloadCalendar').addEventListener('click', function() {
+        html2canvas(document.querySelector('#calendar')).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'calendar.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    });
+
+    // แสดงรายละเอียดงาน
+    function showTaskDetails(event) {
+        removeModalBackdrop();
+        
+        const statusColors = {
+            'assigned': 'warning',
+            'accepted': 'info',
+            'traveling': 'primary',
+            'arrived': 'purple',
+            'fixing': 'orange',
+            'completed': 'success',
+            'cancelled': 'danger',
+            'rescheduled': 'secondary'
+        };
+
+        const statusClass = statusColors[event.extendedProps.status] || 'secondary';
+        const eventId = event.id || event.extendedProps.id;
+        
+        // เพิ่มการตรวจสอบค่า null และ undefined
+        const customer = event.extendedProps.customer || '-';
+        const projectName = event.extendedProps.project_name || '-';
+        const houseNumber = event.extendedProps.house_number || '-';
+        const phone = event.extendedProps.phone || '-';
+        const requestType = event.extendedProps.request_type || '-';
+        const problemTopic = event.extendedProps.problem_topic || '-';
+        const problemDescription = event.extendedProps.problem_description || '-';
+        const technicianInfo = event.extendedProps.technician_info || '-';
+        const description = event.extendedProps.description || '-';
+        
+        document.getElementById('taskDetails').innerHTML = `
+            <div class="mb-3">
+                <strong>ลูกค้า:</strong> ${customer}
+            </div>
+            <div class="mb-3">
+                <strong>โครงการ:</strong> ${projectName}
+            </div>
+            <div class="mb-3">
+                <strong>บ้านเลขที่:</strong> ${houseNumber}
+            </div>
+            <div class="mb-3">
+                <strong>เบอร์โทร:</strong> ${phone}
+            </div>
+            <div class="mb-3">
+                <strong>ประเภทงาน:</strong> ${requestType}
+            </div>
+            <div class="mb-3">
+                <strong>ช่าง:</strong> ${technicianInfo}
+            </div>
+            <div class="mb-3">
+                <strong>เวลานัด:</strong> ${event.extendedProps.appointment_time || '-'}
+            </div>
+            <div class="mb-3">
+                <strong>สถานะ:</strong> 
+                <span class="badge bg-${statusClass}">${event.extendedProps.status_display || '-'}</span>
+            </div>
+            <div class="mb-3">
+                <strong>สถานะประกัน:</strong> 
+                ${event.extendedProps.warranty_status === 'in_warranty' 
+                    ? '<span class="badge bg-success">อยู่ในประกัน</span>' 
+                    : event.extendedProps.warranty_status === 'out_of_warranty' 
+                    ? '<span class="badge bg-danger">ไม่อยู่ในประกัน</span>' 
+                    : '<span class="badge bg-secondary">ไม่ระบุ</span>'}
+            </div>
+            <div class="mb-3">
+                <strong>รายละเอียด:</strong>
+                <p class="mt-1">${description}</p>
+            </div>
+            <div class="mt-3">
+                <a href="/service/request/${eventId}/" 
+                class="btn btn-primary btn-sm">
+                    ดูรายละเอียดเพิ่มเติม
+                </a>
+            </div>
+        `;
+
+        const taskDetailModal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
+        taskDetailModal.show();
+
+        document.getElementById('taskDetailModal').addEventListener('hidden.bs.modal', function () {
+            removeModalBackdrop();
+        }, { once: true });
+    }
+
+    // แสดงรายการงานในวัน
+    function showDayTasks(events, date) {
+        removeModalBackdrop();
+        
+        const formattedDate = new Date(date).toLocaleDateString('th-TH', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        let tasksHtml = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">วัน${formattedDate}</h6>
+                <a href="{% url 'service:technician_daily_summary' %}?date=${new Date(date).toISOString().split('T')[0]}" 
+                class="btn btn-outline-primary btn-sm">
+                    ดูสรุปงานวันนี้
+                </a>
+            </div>
+        `;
+
+        if (!events || events.length === 0) {
+            tasksHtml += '<p class="text-muted">ไม่มีงานในวันนี้</p>';
+        } else {
+            events.forEach(event => {
+                const eventId = event.id || event.extendedProps.id;
+                tasksHtml += `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">${event.extendedProps.customer}</h6>
+                                <span class="badge bg-primary">${event.extendedProps.appointment_time || '-'}</span>
+                            </div>
+                            <p class="mb-1 small">โครงการ: ${event.extendedProps.project_info || '-'}</p>
+                            <p class="mb-1 small">บ้านเลขที่: ${event.extendedProps.house_number || '-'}</p>
+                            <p class="mb-1 small">เบอร์โทร: ${event.extendedProps.phone || '-'}</p>
+                            <p class="mb-1 small">ประเภทงาน: ${event.extendedProps.request_type || '-'}</p>
+                            <p class="mb-1 small">ช่าง: ${event.extendedProps.technician_info || '-'}</p>
+                            <p class="mb-1 text-muted small">${event.extendedProps.description || '-'}</p>
+                            <p class="mb-1 small">
+                                สถานะประกัน: 
+                                <span class="badge bg-${event.extendedProps.warranty_status === 'in_warranty' ? 'success' : 'danger'}">
+                                    ${event.extendedProps.warranty_status === 'in_warranty' ? 'อยู่ในประกัน' : 'ไม่อยู่ในประกัน'}
+                                </span>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-${event.extendedProps.status || 'secondary'}">${event.extendedProps.status_display || '-'}</span>
+                                <a href="/service/request/${eventId}/"
+                                class="btn btn-outline-primary btn-sm">
+                                    ดูรายละเอียด
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('dayTasksList').innerHTML = tasksHtml;
+        const dayTasksModal = new bootstrap.Modal(document.getElementById('dayTasksModal'));
+        dayTasksModal.show();
+    }
+
+    // เพิ่ม event listeners สำหรับปุ่มปิด modal
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            removeModalBackdrop();
+        });
+    });
+});
+</script>
+{% endblock %}

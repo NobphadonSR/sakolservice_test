@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}แก้ไขข้อมูลลูกค้า{% else %}เพิ่มลูกค้าใหม่{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="form-container">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    {% if form.instance.pk %}แก้ไขข้อมูลลูกค้า{% else %}เพิ่มลูกค้าใหม่{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {% if field.field.widget.input_type == 'textarea' %}
+                            <textarea name="{{ field.name }}" 
+                                      id="{{ field.id_for_label }}" 
+                                      class="form-control"
+                                      rows="4">{{ field.value|default:'' }}</textarea>
+                        {% elif field.field.widget.input_type == 'select' %}
+                            <select name="{{ field.name }}" 
+                                    id="{{ field.id_for_label }}" 
+                                    class="form-control">
+                                {% for value, label in field.field.choices %}
+                                    <option value="{{ value }}" {% if field.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input type="{{ field.field.widget.input_type }}" 
+                                   name="{{ field.name }}" 
+                                   id="{{ field.id_for_label }}" 
+                                   class="form-control"
+                                   value="{{ field.value|default:'' }}">
+                        {% endif %}
+                        
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% if field.errors %}
+                        <div class="alert alert-danger">
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary">บันทึก</button>
+                        <a href="{% url 'accounts:customer_list' %}" class="btn btn-secondary">ยกเลิก</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 0 20px rgba(0,0,0,0.08);
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+        padding: 20px 24px;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #344767;
+    }
+
+    .form-control {
+        border: 1px solid #e9ecef;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: #084298;
+        box-shadow: 0 0 0 0.2rem rgba(8,66,152,0.1);
+    }
+
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+        padding-right: 40px;
+        height: 45px;
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .alert-danger {
+        background-color: #fff;
+        border: 1px solid #dc3545;
+        border-radius: 8px;
+        color: #dc3545;
+        font-size: 0.9rem;
+        padding: 8px 12px;
+        margin-top: 4px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background-color: #084298;
+        border-color: #084298;
+        color: #fff;
+    }
+
+    .btn-primary:hover {
+        background-color: #ffffff;
+        color: #084298;
+        border-color: #084298;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: #ffffff;
+    }
+
+    .btn-secondary:hover {
+        background-color: #ffffff;
+        border-color: #6c757d;
+        color: #6c757d;
+        transform: translateY(-1px);
+    }
+
+    .d-grid {
+        gap: 12px;
+    }
+
+    /* ทำให้ฟอร์มมีความกว้างคงที่ */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* ปรับแต่ง select dropdown */
+    select.form-control {
+        background-color: #fff;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        border: 1px solid #e9ecef;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    select.form-control:focus {
+        border-color: #084298;
+        box-shadow: 0 0 0 0.2rem rgba(8,66,152,0.1);
+        outline: 0;
+    }
+
+    select.form-control option {
+        padding: 8px;
+        font-size: 0.95rem;
+    }
+
+    select.form-control:hover {
+        border-color: #084298;
+    }
+</style>
+{% endblock %}
